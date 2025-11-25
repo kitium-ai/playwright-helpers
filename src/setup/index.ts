@@ -9,7 +9,8 @@ import {
   type Page,
   type PlaywrightTestConfig,
 } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 import { getConfigManager } from '@kitiumai/test-core/config';
 
 export interface TestFixtures {
@@ -114,7 +115,7 @@ export const PlaywrightPresets = {
  */
 export async function globalSetup(): Promise<void> {
   // Setup tasks that run once before all tests
-  const logger = getLogger();
+  const logger = getTestLogger();
   logger.info('Running global Playwright setup');
   process.env['PLAYWRIGHT_TEST_RUNNING'] = 'true';
 }
@@ -124,7 +125,7 @@ export async function globalSetup(): Promise<void> {
  */
 export async function globalTeardown(): Promise<void> {
   // Cleanup tasks that run once after all tests
-  const logger = getLogger();
+  const logger = getTestLogger();
   logger.info('Running global Playwright teardown');
   delete process.env['PLAYWRIGHT_TEST_RUNNING'];
 }
@@ -150,7 +151,7 @@ export async function setupPageForTesting(page: Page): Promise<void> {
   });
 
   // Setup console message handler with context-aware logging
-  const logger = getLogger();
+  const logger = getTestLogger();
   page.on('console', (msg) => {
     const context = contextManager.getContext();
     const logData = {
@@ -190,7 +191,7 @@ export async function setupContextForTesting(context: BrowserContext): Promise<v
 
 /**
  * Environment setup utilities
- * Uses @kitiumai/logger for structured logging
+ * Uses @kitiumai/test-core/logger for structured logging
  */
 export function setupEnvironmentVariables(): void {
   // Set test environment variables
@@ -198,9 +199,9 @@ export function setupEnvironmentVariables(): void {
   const logLevel = process.env['LOG_LEVEL'];
   process.env['LOG_LEVEL'] = logLevel ?? 'error';
 
-  // Logger is already configured via @kitiumai/logger
+  // Logger is already configured via @kitiumai/test-core/logger
   // No need to suppress console - logger handles this based on log level
-  const logger = getLogger();
+  const logger = getTestLogger();
   logger.debug('Test environment variables configured', {
     nodeEnv: process.env['NODE_ENV'],
     logLevel: process.env['LOG_LEVEL'],

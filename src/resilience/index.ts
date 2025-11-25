@@ -4,7 +4,8 @@
  */
 
 import type { Page } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 import { retry as retryCore, sleep } from '@kitiumai/test-core/async';
 
 export interface CircuitBreakerOptions {
@@ -23,7 +24,7 @@ export class CircuitBreaker {
   private failureCount = 0;
   private lastFailureTime: number | null = null;
   private readonly options: Required<CircuitBreakerOptions>;
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
 
   constructor(options: CircuitBreakerOptions) {
     this.options = {
@@ -129,7 +130,7 @@ export class CircuitBreaker {
  * Timeout manager with configurable strategies
  */
 export class TimeoutManager {
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
 
   /**
    * Execute operation with timeout
@@ -204,7 +205,7 @@ export class TimeoutManager {
  * Chaos testing utilities
  */
 export class ChaosInjector {
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -329,7 +330,7 @@ export async function withResilience<T>(
   options: ResilienceOptions,
   operation: () => Promise<T>
 ): Promise<T> {
-  const logger = getLogger();
+  const logger = getTestLogger();
   const context = contextManager.getContext();
 
   logger.debug('Executing operation with resilience patterns', {

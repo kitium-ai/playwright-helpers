@@ -5,7 +5,8 @@
  */
 
 import type { Page } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 
 // Re-export from test-core
 export type { Factory } from '@kitiumai/test-core/builders';
@@ -42,7 +43,7 @@ export async function fillFormWithTestData(
     suffix?: string;
   } = {}
 ): Promise<void> {
-  const logger = getLogger();
+  const logger = getTestLogger();
   const context = contextManager.getContext();
   const { prefix = '', suffix = '' } = options;
 

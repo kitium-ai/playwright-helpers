@@ -3,7 +3,8 @@
  * Custom HTML reports, analytics dashboard, and flaky test detection
  */
 
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -62,7 +63,7 @@ export interface FlakyTestDetection {
  */
 export class TestExecutionRecorder {
   private readonly executions: Map<string, TestExecution[]> = new Map();
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
 
   /**
    * Record test execution
@@ -243,7 +244,7 @@ export class TestAnalyticsGenerator {
  */
 export class HTMLReportGenerator {
   private readonly outputDir: string;
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
 
   constructor(outputDir = './test-results/reports') {
     this.outputDir = outputDir;

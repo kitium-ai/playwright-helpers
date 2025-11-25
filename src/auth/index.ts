@@ -1,10 +1,11 @@
 /**
  * Authentication helpers for Playwright tests
- * Integrates with @kitiumai/logger for structured logging
+ * Integrates with @kitiumai/test-core/logger for structured logging
  */
 
 import type { Page, BrowserContext } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 import { traceTest } from '../tracing';
 
 export interface LoginCredentials {
@@ -34,7 +35,7 @@ export interface AuthConfig {
 export class AuthHelper {
   private readonly tokens: Map<string, AuthToken> = new Map();
   private readonly config: AuthConfig;
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
 
   constructor(config: AuthConfig) {
     this.config = {

@@ -1,10 +1,11 @@
 /**
  * Page Object Model framework for Playwright
- * Integrates with @kitiumai/logger for structured logging and tracing
+ * Integrates with @kitiumai/test-core/logger for structured logging and tracing
  */
 
 import { type Page, type Locator } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 import { traceTest } from '../tracing';
 
 export interface PageObjectOptions {
@@ -21,7 +22,7 @@ export abstract class BasePage {
   protected waitTimeout: number;
   protected retryAttempts: number;
   protected autoScreenshot: boolean;
-  protected readonly logger = getLogger();
+  protected readonly logger = getTestLogger();
 
   constructor(page: Page, options: PageObjectOptions = {}) {
     this.page = page;

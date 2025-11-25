@@ -1,10 +1,11 @@
 /**
  * Distributed tracing support for Playwright tests
- * Integrates with @kitiumai/logger for trace context propagation
+ * Integrates with @kitiumai/test-core/logger for trace context propagation
  */
 
 import type { Page } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 
 export interface TraceSpan {
   name: string;
@@ -29,7 +30,7 @@ export interface TraceContext {
  * Trace manager for test operations
  */
 export class TraceManager {
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
   private readonly spans: Map<string, TraceSpan> = new Map();
   private currentSpanId: string | null = null;
 
@@ -246,7 +247,7 @@ export async function extractTraceContextFromPage(page: Page): Promise<TraceCont
           spanId: context.spanId,
         },
         () => {
-          getLogger().debug('Extracted trace context from page', context);
+          getTestLogger().debug('Extracted trace context from page', context);
         }
       );
     }
@@ -288,7 +289,7 @@ export async function injectTraceContextIntoPage(page: Page, context: TraceConte
  * Setup automatic trace context propagation for a page
  */
 export async function setupTracePropagation(page: Page): Promise<void> {
-  const logger = getLogger();
+  const logger = getTestLogger();
 
   // Extract trace context on page load
   page.on('load', async () => {

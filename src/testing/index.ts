@@ -4,7 +4,8 @@
  */
 
 import { type Page, expect } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 
 type TestHelperWindow = Window & {
   __testData?: Record<string, unknown>;
@@ -588,13 +589,13 @@ export class StorageHelper {
 
 /**
  * Console helper for E2E tests
- * Integrates with @kitiumai/logger for structured logging
+ * Integrates with @kitiumai/test-core/logger for structured logging
  */
 export class ConsoleHelper {
   private logs: ConsoleLogEntry[] = [];
   private errors: ConsoleLogEntry[] = [];
   private warnings: ConsoleLogEntry[] = [];
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
 
   constructor(page: Page) {
     const context = contextManager.getContext();

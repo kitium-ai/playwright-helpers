@@ -4,7 +4,8 @@
  */
 
 import type { Page } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 
 export interface ContractValidationResult {
   passed: boolean;
@@ -38,7 +39,7 @@ export interface OpenAPISpec {
  * Contract validator for API testing
  */
 export class ContractValidator {
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
   private spec: OpenAPISpec | null = null;
 
   /**
@@ -334,7 +335,7 @@ export async function setupContractValidation(
   await validator.loadSpec(specPathOrUrl);
 
   const context = contextManager.getContext();
-  const logger = getLogger();
+  const logger = getTestLogger();
 
   // Intercept API requests and validate
   await page.route('**/api/**', async (route) => {

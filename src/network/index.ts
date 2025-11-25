@@ -1,10 +1,11 @@
 /**
  * Network and API mocking helpers for Playwright
- * Integrates with @kitiumai/logger for structured logging
+ * Integrates with @kitiumai/test-core/logger for structured logging
  */
 
 import { type Page, type Route } from '@playwright/test';
-import { getLogger, contextManager } from '@kitiumai/logger';
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core/logger';
 
 export interface MockResponse {
   status?: number;
@@ -18,7 +19,7 @@ export interface MockResponse {
 export class NetworkMockManager {
   private readonly routes: Map<string, MockResponse> = new Map();
   private interceptedRequests: Array<{ url: string; method: string; body?: string }> = [];
-  private readonly logger = getLogger();
+  private readonly logger = getTestLogger();
 
   /**
    * Register a route mock
