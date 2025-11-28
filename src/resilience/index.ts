@@ -5,7 +5,6 @@
 
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger, retry as retryCore, sleep } from '@kitiumai/test-core';
-
 import type { Page } from '@playwright/test';
 
 export interface CircuitBreakerOptions {

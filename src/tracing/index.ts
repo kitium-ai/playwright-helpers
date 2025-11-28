@@ -5,7 +5,6 @@
 
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
-
 import type { Page } from '@playwright/test';
 
 export interface TraceSpan {

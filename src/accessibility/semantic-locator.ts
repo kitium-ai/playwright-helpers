@@ -1,6 +1,5 @@
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
-
 import type { Locator, Page } from '@playwright/test';
 
 export interface SemanticSelector {
