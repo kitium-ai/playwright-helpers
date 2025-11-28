@@ -4,15 +4,16 @@
  * Plus Playwright-specific utilities
  */
 
-import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import {
-  getTestLogger,
-  type Factory,
+  BuilderGenerators as Generators,
   createBuilder,
   createFactory,
-  BuilderGenerators as Generators,
+  type Factory,
+  getTestLogger,
 } from '@kitiumai/test-core';
+
+import type { Page } from '@playwright/test';
 
 // Re-export from test-core
 export type { Factory };
@@ -77,7 +78,7 @@ export async function fillFormWithTestData(
           const count = await locator.count();
 
           if (count > 0) {
-            const tagName = await locator.evaluate((el) => el.tagName.toLowerCase());
+            const tagName = await locator.evaluate((element) => element.tagName.toLowerCase());
             if (tagName === 'select') {
               await locator.selectOption(stringValue);
             } else {

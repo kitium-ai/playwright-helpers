@@ -3,9 +3,9 @@
  * Provides utilities for advanced E2E testing with Playwright
  */
 
-import { type Page, expect } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+import { expect, type Page } from '@playwright/test';
 
 type TestHelperWindow = Window & {
   __testData?: Record<string, unknown>;
@@ -141,19 +141,22 @@ export class FormHelper {
       const data: Record<string, FormFieldValue> = {};
       const elements = (form as HTMLFormElement).elements;
 
-      for (let i = 0; i < elements.length; i++) {
-        const el = elements[i] as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-        if (!el?.name) {
+      for (let index = 0; index < elements.length; index++) {
+        const element = elements[index] as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement;
+        if (!element?.name) {
           continue;
         }
-        if (el instanceof HTMLInputElement && el.type === 'checkbox') {
-          data[el.name] = el.checked;
-        } else if (el instanceof HTMLInputElement && el.type === 'radio') {
-          if (el.checked) {
-            data[el.name] = el.value;
+        if (element instanceof HTMLInputElement && element.type === 'checkbox') {
+          data[element.name] = element.checked;
+        } else if (element instanceof HTMLInputElement && element.type === 'radio') {
+          if (element.checked) {
+            data[element.name] = element.value;
           }
         } else {
-          data[el.name] = el.value;
+          data[element.name] = element.value;
         }
       }
 
@@ -229,7 +232,7 @@ export class TableHelper {
    */
   async findRow(tableSelector: string, content: string): Promise<number> {
     const rows = await this.getTableData(tableSelector);
-    return rows.findIndex((row) => Object.values(row).some((val) => val.includes(content)));
+    return rows.findIndex((row) => Object.values(row).some((value) => value.includes(content)));
   }
 
   /**
@@ -382,12 +385,12 @@ export class WaitHelper {
     // Wait for position to stabilize
     await this.page.waitForFunction(
       (sel) => {
-        const el = document.querySelector(sel) as HTMLElement;
-        if (!el) {
+        const element = document.querySelector(sel) as HTMLElement;
+        if (!element) {
           return false;
         }
 
-        const rect = el.getBoundingClientRect();
+        const rect = element.getBoundingClientRect();
         const win = window as TestHelperWindow;
         win.__lastRect = win.__lastRect ?? rect;
 
@@ -599,11 +602,11 @@ export class ConsoleHelper {
 
   constructor(page: Page) {
     const context = contextManager.getContext();
-    page.on('console', (msg) => {
-      const args = msg.args().map((arg) => arg.toString());
+    page.on('console', (message) => {
+      const args = message.args().map((argument) => argument.toString());
       const logEntry: ConsoleLogEntry = {
-        type: msg.type(),
-        text: msg.text(),
+        type: message.type(),
+        text: message.text(),
         args,
         timestamp: Date.now(),
       };
@@ -615,20 +618,20 @@ export class ConsoleHelper {
       }
 
       // Store for test assertions
-      const msgType = msg.type();
-      if (msgType === 'log') {
+      const messageType = message.type();
+      if (messageType === 'log') {
         this.logs.push(logEntry);
-      } else if (msgType === 'error') {
+      } else if (messageType === 'error') {
         this.errors.push(logEntry);
         this.logger.error('Browser console error', {
-          message: msg.text(),
+          message: message.text(),
           traceId: context.traceId,
           pageUrl: page.url(),
         });
-      } else if (msgType === 'warning') {
+      } else if (messageType === 'warning') {
         this.warnings.push(logEntry);
         this.logger.warn('Browser console warning', {
-          message: msg.text(),
+          message: message.text(),
           traceId: context.traceId,
           pageUrl: page.url(),
         });

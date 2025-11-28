@@ -3,11 +3,12 @@
  * Integrates with @kitiumai/test-core/logger for structured logging and tracing
  */
 
-import { type Page, type Locator } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
-import { traceTest } from '../tracing';
+import { type Locator, type Page } from '@playwright/test';
+
 import { strictLocator, warnOnNonSemantic } from '../accessibility/semantic-locator';
+import { traceTest } from '../tracing';
 
 export interface PageObjectOptions {
   baseUrl?: string;
@@ -104,8 +105,15 @@ export abstract class BasePage {
     const timeout = options?.timeout ?? this.waitTimeout;
 
     try {
-      const locator = strictLocator(this.page, { testId: identifier, name: identifier }, { warnOnCss: true });
-      await locator.click({ timeout, force: options?.force });
+      const locator = strictLocator(
+        this.page,
+        { testId: identifier, name: identifier },
+        { warnOnCss: true }
+      );
+      await locator.click({
+        timeout,
+        ...(options?.force !== undefined && { force: options.force }),
+      });
       return;
     } catch {
       // fallback to heuristics when semantic locator fails
@@ -144,7 +152,7 @@ export abstract class BasePage {
     options?: { timeout?: number; force?: boolean }
   ): Promise<void> {
     const context = contextManager.getContext();
-    const selectorStr = typeof selector === 'string' ? selector : '<Locator>';
+    const selectorString = typeof selector === 'string' ? selector : '<Locator>';
 
     return traceTest(
       'page.click',
@@ -152,7 +160,7 @@ export abstract class BasePage {
         this.logger.debug('Clicking element', {
           traceId: context.traceId,
           spanId,
-          selector: selectorStr,
+          selector: selectorString,
         });
 
         const locator = this.resolveLocator(selector);
@@ -170,19 +178,19 @@ export abstract class BasePage {
             this.logger.debug('Click successful', {
               traceId: context.traceId,
               spanId,
-              selector: selectorStr,
+              selector: selectorString,
               attempt,
             });
             return;
           } catch (_error) {
-            const err = _error instanceof Error ? _error : new Error(String(_error));
-            lastError = err;
+            const error = _error instanceof Error ? _error : new Error(String(_error));
+            lastError = error;
             this.logger.warn('Click attempt failed', {
               traceId: context.traceId,
               spanId,
-              selector: selectorStr,
+              selector: selectorString,
               attempt,
-              error: err.message,
+              error: error.message,
             });
 
             if (attempt < this.retryAttempts) {
@@ -193,12 +201,12 @@ export abstract class BasePage {
 
         await this.handleError(
           'click',
-          selectorStr,
+          selectorString,
           [],
           lastError?.message ?? 'Click failed after retries'
         );
       },
-      { selector: selectorStr, timeout: options?.timeout, force: options?.force }
+      { selector: selectorString, timeout: options?.timeout, force: options?.force }
     );
   }
 
@@ -211,7 +219,7 @@ export abstract class BasePage {
     options?: { delay?: number }
   ): Promise<void> {
     const context = contextManager.getContext();
-    const selectorStr = typeof selector === 'string' ? selector : '<Locator>';
+    const selectorString = typeof selector === 'string' ? selector : '<Locator>';
 
     return traceTest(
       'page.type',
@@ -219,7 +227,7 @@ export abstract class BasePage {
         this.logger.debug('Typing into element', {
           traceId: context.traceId,
           spanId,
-          selector: selectorStr,
+          selector: selectorString,
           textLength: text.length,
         });
 
@@ -234,19 +242,19 @@ export abstract class BasePage {
             this.logger.debug('Type successful', {
               traceId: context.traceId,
               spanId,
-              selector: selectorStr,
+              selector: selectorString,
               attempt,
             });
             return;
           } catch (_error) {
-            const err = _error instanceof Error ? _error : new Error(String(_error));
-            lastError = err;
+            const error = _error instanceof Error ? _error : new Error(String(_error));
+            lastError = error;
             this.logger.warn('Type attempt failed', {
               traceId: context.traceId,
               spanId,
-              selector: selectorStr,
+              selector: selectorString,
               attempt,
-              error: err.message,
+              error: error.message,
             });
 
             if (attempt < this.retryAttempts) {
@@ -257,12 +265,12 @@ export abstract class BasePage {
 
         await this.handleError(
           'type',
-          selectorStr,
+          selectorString,
           [],
           lastError?.message ?? 'Type failed after retries'
         );
       },
-      { selector: selectorStr, textLength: text.length, delay: options?.delay }
+      { selector: selectorString, textLength: text.length, delay: options?.delay }
     );
   }
 
@@ -386,11 +394,11 @@ export abstract class BasePage {
   /**
    * Execute JavaScript
    */
-  async execute<T>(script: string | ((arg?: unknown) => T), arg?: unknown): Promise<T> {
+  async execute<T>(script: string | ((argument?: unknown) => T), argument?: unknown): Promise<T> {
     if (typeof script === 'function') {
-      return await this.page.evaluate(script, arg);
+      return await this.page.evaluate(script, argument);
     }
-    return await this.page.evaluate(script as string, arg);
+    return await this.page.evaluate(script as string, argument);
   }
 
   /**
@@ -455,7 +463,7 @@ export abstract class BasePage {
 
     // ARIA label and roles
     strategies.push(`[aria-label="${identifier}"]`);
-    
+
     // Name attribute
     strategies.push(`[name="${identifier}"]`);
 

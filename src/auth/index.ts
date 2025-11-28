@@ -3,9 +3,10 @@
  * Integrates with @kitiumai/test-core/logger for structured logging
  */
 
-import type { Page, BrowserContext } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+import type { BrowserContext, Page } from '@playwright/test';
+
 import { traceTest } from '../tracing';
 
 export interface LoginCredentials {

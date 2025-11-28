@@ -232,11 +232,11 @@ export class PerformanceMonitor {
   /**
    * Profile function execution
    */
-  async profileFunction<T>(page: Page, fn: () => Promise<T>, label: string): Promise<T> {
+  async profileFunction<T>(page: Page, function_: () => Promise<T>, label: string): Promise<T> {
     const startMemory = await this.getMemoryUsage(page);
     const startTime = performance.now();
 
-    const result = await fn();
+    const result = await function_();
 
     const duration = performance.now() - startTime;
     const endMemory = await this.getMemoryUsage(page);

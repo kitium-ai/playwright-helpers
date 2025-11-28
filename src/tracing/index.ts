@@ -3,9 +3,10 @@
  * Integrates with @kitiumai/test-core/logger for trace context propagation
  */
 
-import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+
+import type { Page } from '@playwright/test';
 
 export interface TraceSpan {
   name: string;
@@ -189,9 +190,9 @@ export async function traceTest<T>(
     traceManager.endSpan(spanId, 'ok');
     return result;
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    traceManager.endSpan(spanId, 'error', err);
-    throw err;
+    const error_ = error instanceof Error ? error : new Error(String(error));
+    traceManager.endSpan(spanId, 'error', error_);
+    throw error_;
   }
 }
 
@@ -212,9 +213,9 @@ export async function traceChild<T>(
     traceManager.endSpan(spanId, 'ok');
     return result;
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    traceManager.endSpan(spanId, 'error', err);
-    throw err;
+    const error_ = error instanceof Error ? error : new Error(String(error));
+    traceManager.endSpan(spanId, 'error', error_);
+    throw error_;
   }
 }
 

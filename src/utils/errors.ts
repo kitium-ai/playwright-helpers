@@ -3,11 +3,7 @@
  * Extends @kitiumai/test-core error handling with Playwright-specific context
  */
 
-import {
-  EnhancedTestError,
-  TestErrorMessages,
-  type ErrorContext,
-} from '@kitiumai/test-core';
+import { EnhancedTestError, type ErrorContext, TestErrorMessages } from '@kitiumai/test-core';
 
 /**
  * Playwright-specific enhanced error

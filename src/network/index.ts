@@ -3,9 +3,9 @@
  * Integrates with @kitiumai/test-core/logger for structured logging
  */
 
-import { type Page, type Route } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+import { type Page, type Route } from '@playwright/test';
 
 export interface MockResponse {
   status?: number;
@@ -137,14 +137,14 @@ export class NetworkMockManager {
     pattern: string | RegExp
   ): Array<{ url: string; method: string; body?: string }> {
     const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
-    return this.interceptedRequests.filter((req) => regex.test(req.url));
+    return this.interceptedRequests.filter((request) => regex.test(request.url));
   }
 
   /**
    * Get requests by method
    */
   getRequestsByMethod(method: string): Array<{ url: string; method: string; body?: string }> {
-    return this.interceptedRequests.filter((req) => req.method === method.toUpperCase());
+    return this.interceptedRequests.filter((request) => request.method === method.toUpperCase());
   }
 
   /**

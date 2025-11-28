@@ -2,9 +2,10 @@
  * Visual regression and screenshot helpers for Playwright
  */
 
-import type { Page, Locator } from '@playwright/test';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import type { Locator, Page } from '@playwright/test';
 
 export interface ScreenshotOptions {
   fullPage?: boolean;
@@ -219,11 +220,11 @@ export async function getPixelColor(page: Page, x: number, y: number): Promise<s
       const canvas = document.createElement('canvas');
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
+      const context = canvas.getContext('2d');
+      if (!context) {
         return 'rgba(0,0,0,0)';
       }
-      const imageData = ctx.getImageData(px, py, 1, 1);
+      const imageData = context.getImageData(px, py, 1, 1);
       const [r, g, b, a] = imageData.data;
       return `rgba(${r},${g},${b},${a})`;
     },
@@ -236,8 +237,8 @@ export async function getPixelColor(page: Page, x: number, y: number): Promise<s
  * Assert element is in viewport
  */
 export async function assertInViewport(locator: Locator): Promise<void> {
-  const isInViewport = await locator.evaluate((el) => {
-    const rect = el.getBoundingClientRect();
+  const isInViewport = await locator.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
     return (
       rect.top >= 0 &&
       rect.left >= 0 &&
@@ -255,8 +256,8 @@ export async function assertInViewport(locator: Locator): Promise<void> {
  * Measure element dimensions
  */
 export async function measureElement(locator: Locator): Promise<{ width: number; height: number }> {
-  const dimensions = await locator.evaluate((el) => {
-    const rect = el.getBoundingClientRect();
+  const dimensions = await locator.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
     return {
       width: rect.width,
       height: rect.height,
@@ -270,8 +271,8 @@ export async function measureElement(locator: Locator): Promise<{ width: number;
  * Get computed styles
  */
 export async function getComputedStyles(locator: Locator): Promise<Record<string, string>> {
-  const styles = await locator.evaluate((el) => {
-    const computed = window.getComputedStyle(el);
+  const styles = await locator.evaluate((element) => {
+    const computed = window.getComputedStyle(element);
     return {
       display: computed.display,
       visibility: computed.visibility,

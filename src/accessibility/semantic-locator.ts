@@ -1,6 +1,7 @@
-import type { Locator, Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+
+import type { Locator, Page } from '@playwright/test';
 
 export interface SemanticSelector {
   testId?: string;
@@ -15,17 +16,25 @@ export interface StrictLocatorOptions {
   requireSemantic?: boolean;
 }
 
-export function strictLocator(page: Page, selector: SemanticSelector | string, options: StrictLocatorOptions = {}): Locator {
+export function strictLocator(
+  page: Page,
+  selector: SemanticSelector | string,
+  options: StrictLocatorOptions = {}
+): Locator {
   const logger = getTestLogger();
   const context = contextManager.getContext();
-  const normalized = typeof selector === 'string' ? ({ css: selector } satisfies SemanticSelector) : selector;
+  const normalized =
+    typeof selector === 'string' ? ({ css: selector } satisfies SemanticSelector) : selector;
 
   if (normalized.testId) {
     return page.getByTestId(normalized.testId);
   }
 
   if (normalized.role) {
-    return page.getByRole(normalized.role as never, normalized.name ? { name: normalized.name as never } : undefined);
+    return page.getByRole(
+      normalized.role as never,
+      normalized.name ? { name: normalized.name as never } : undefined
+    );
   }
 
   if (normalized.name && typeof normalized.name === 'string') {
