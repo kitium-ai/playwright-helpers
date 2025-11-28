@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Core fixture kit (`coreTest`) with console capture, trace-aware artifacts, and network mocking
+- CLI scaffolder utility (`scaffoldPlaywrightAsset`) for tests, pages, and flows
+- Semantic selector helpers (`strictLocator`, `warnOnNonSemantic`) for ARIA/data-testid-first queries
+- Contract-backed network virtualization and OpenAPI-aware mocks
+- Trace exporter helpers and quality scorecard gate (`npm run verify:test-quality`)
+
 ## [1.0.0] - 2025-11-25
 
 ### Added

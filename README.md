@@ -27,6 +27,11 @@ npm install @kitiumai/playwright-helpers
 - ⚙️ **Setup & Config** - Playwright presets, global hooks, `generatePlaywrightConfig()`
 - 🛡️ **Resilience & Chaos** - Circuit breakers, timeouts, retries, and chaos injectors
 - 🔍 **Tracing & Observability** - Trace propagation, child spans, and console capture
+- 🧪 **Fixture Kit & CLI Scaffolder** - Typed `test.extend` fixtures plus a `scaffoldPlaywrightAsset` helper
+- ♿ **Semantic Selectors** - `strictLocator` enforces data-testid/ARIA-first queries
+- 📜 **Contract-backed Mocks** - Mock routes while validating against OpenAPI contracts
+- 📡 **Trace Exporters** - Ship spans to OTLP collectors and stitch artifacts with trace IDs
+- 🧭 **Quality Scorecard** - `verify:test-quality` gate for accessibility, flake rate, and retry budgets
 
 ## Quick Start
 
@@ -54,6 +59,25 @@ test('should login successfully', async ({ page }) => {
   await loginPage.goto('/login');
   await loginPage.login('user@example.com', 'password');
   expect(page.url()).toContain('dashboard');
+});
+```
+
+### Core fixtures & scaffolding
+
+Use the built-in fixture kit to get console capture, contract-aware network mocking, accessibility helpers, and trace-aware artifacts in a single import. You can scaffold a starter spec with `scaffoldPlaywrightAsset` or any custom CLI wrapper.
+
+```typescript
+import { coreTest as test, scaffoldPlaywrightAsset } from '@kitiumai/playwright-helpers/setup';
+
+// Scaffold an example spec
+await scaffoldPlaywrightAsset({ destination: 'tests/e2e', name: 'onboarding', kind: 'test' });
+
+test('dashboard renders with mocked profile', async ({ page, loginFlow, mockManager, artifactCollector, consoleLogs }) => {
+  await mockManager.registerRoute('**/api/profile', { status: 200, body: { name: 'Ada' } });
+  await loginFlow.login({ email: 'demo@example.com', password: 'secret' });
+  await page.getByRole('heading', { name: /welcome/i }).waitFor();
+  await artifactCollector.recordScreenshot('dashboard');
+  consoleLogs.forEach((entry) => console.log(entry.text));
 });
 ```
 
@@ -213,6 +237,52 @@ const errors = await formFlow.fillAndVerifyValidation(
     },
   }
 );
+```
+
+### Semantic selectors
+
+Prefer accessible, deterministic queries using `strictLocator`:
+
+```typescript
+import { strictLocator } from '@kitiumai/playwright-helpers/accessibility';
+
+const button = strictLocator(page, { role: 'button', name: /submit/i });
+await button.click();
+```
+
+### Contract-backed network mocks
+
+Wire mocks to an OpenAPI contract so fixtures stay in sync:
+
+```typescript
+import { setupContractBackedMocks } from '@kitiumai/playwright-helpers/contract';
+
+const contracted = await setupContractBackedMocks(page, './specs/openapi.json', [
+  { method: 'GET', path: '**/api/profile', fixture: { name: 'Ada' }, schema: { name: '' } },
+]);
+
+await contracted.getNetworkManager().setupRouteInterception(page);
+```
+
+### Observability export
+
+Push captured spans to your OTLP collector and stitch artifacts with trace IDs:
+
+```typescript
+import { exportTracesToCollector, stitchArtifactsWithTrace } from '@kitiumai/playwright-helpers/tracing';
+
+const response = await exportTracesToCollector({ collectorUrl: 'https://otel.example.com/v1/traces' });
+console.log('exported?', response.ok);
+
+const correlatedArtifacts = stitchArtifactsWithTrace('trace-id', ['test-results/example.png']);
+```
+
+### Quality scorecard
+
+Generate or load `test-results/quality-metrics.json` in CI and enforce the gate:
+
+```bash
+npm run verify:test-quality
 ```
 
 #### `UserJourneyFlow`

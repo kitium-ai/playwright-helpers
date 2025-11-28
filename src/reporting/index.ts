@@ -239,6 +239,8 @@ export class TestAnalyticsGenerator {
   }
 }
 
+export * from './quality-scorecard';
+
 /**
  * HTML report generator
  */

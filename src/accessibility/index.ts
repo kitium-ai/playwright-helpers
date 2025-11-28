@@ -248,6 +248,8 @@ export class AccessibilityChecker {
   }
 }
 
+export { strictLocator, warnOnNonSemantic } from './semantic-locator';
+
 /**
  * Create accessibility checker
  */

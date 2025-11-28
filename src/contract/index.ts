@@ -6,6 +6,7 @@
 import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+import { createNetworkMockManager, type NetworkMockManager } from '../network';
 
 export interface ContractValidationResult {
   passed: boolean;
@@ -33,6 +34,14 @@ export interface OpenAPISpec {
   components?: {
     schemas?: Record<string, unknown>;
   };
+}
+
+export interface ContractedRouteOptions {
+  method: string;
+  path: string;
+  status?: number;
+  fixture?: unknown;
+  schema?: Record<string, unknown>;
 }
 
 /**
@@ -322,6 +331,76 @@ export class ContractValidator {
       warnings: [...requestResult.warnings, ...responseResult.warnings],
     };
   }
+}
+
+/**
+ * Contract-aware network virtualization
+ */
+export class ContractMockManager {
+  private readonly validator: ContractValidator;
+  private readonly mockManager: NetworkMockManager;
+  private readonly logger = getTestLogger();
+
+  constructor(validator: ContractValidator, mockManager = createNetworkMockManager()) {
+    this.validator = validator;
+    this.mockManager = mockManager;
+  }
+
+  private validateFixtureAgainstSchema(fixture: unknown, schema?: Record<string, unknown>): void {
+    if (!schema || typeof fixture !== 'object' || fixture === null) {
+      return;
+    }
+
+    const missing = Object.keys(schema).filter((key) => !(key in (fixture as Record<string, unknown>)));
+    if (missing.length > 0) {
+      throw new Error(`Fixture missing required contract keys: ${missing.join(', ')}`);
+    }
+  }
+
+  async registerRoute(page: Page, options: ContractedRouteOptions): Promise<void> {
+    const { method, path, status = 200, fixture, schema } = options;
+    this.validateFixtureAgainstSchema(fixture, schema);
+
+    this.mockManager.registerRoute(path, {
+      status,
+      headers: { 'Content-Type': 'application/json', 'x-contract-backed': 'true' },
+      body: fixture ?? {},
+    });
+
+    await this.validator.validateRequest(method, path, fixture as unknown);
+
+    await page.route(path, async (route) => {
+      const result = await this.validator.validateRequest(method, path, route.request().postDataJSON());
+      if (!result.passed) {
+        this.logger.warn('Contract validation failed for mocked route', { path, method, violations: result.violations });
+      }
+      await route.fulfill({
+        status,
+        headers: { 'Content-Type': 'application/json', 'x-contract-backed': 'true' },
+        body: JSON.stringify(fixture ?? {}),
+      });
+    });
+  }
+
+  getNetworkManager(): NetworkMockManager {
+    return this.mockManager;
+  }
+}
+
+export async function setupContractBackedMocks(
+  page: Page,
+  specPathOrUrl: string,
+  routes: ContractedRouteOptions[]
+): Promise<ContractMockManager> {
+  const validator = new ContractValidator();
+  await validator.loadSpec(specPathOrUrl);
+  const manager = new ContractMockManager(validator);
+
+  for (const route of routes) {
+    await manager.registerRoute(page, route);
+  }
+
+  return manager;
 }
 
 /**

@@ -7,6 +7,7 @@ import { type Page, type Locator } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
 import { traceTest } from '../tracing';
+import { strictLocator, warnOnNonSemantic } from '../accessibility/semantic-locator';
 
 export interface PageObjectOptions {
   baseUrl?: string;
@@ -102,6 +103,14 @@ export abstract class BasePage {
     const strategies = this.generateSelectorStrategies(identifier);
     const timeout = options?.timeout ?? this.waitTimeout;
 
+    try {
+      const locator = strictLocator(this.page, { testId: identifier, name: identifier }, { warnOnCss: true });
+      await locator.click({ timeout, force: options?.force });
+      return;
+    } catch {
+      // fallback to heuristics when semantic locator fails
+    }
+
     for (const selector of strategies) {
       try {
         const locator = this.page.locator(selector).first();
@@ -146,7 +155,7 @@ export abstract class BasePage {
           selector: selectorStr,
         });
 
-        const locator = typeof selector === 'string' ? this.page.locator(selector) : selector;
+        const locator = this.resolveLocator(selector);
         const timeout = options?.timeout ?? this.waitTimeout;
 
         let lastError: Error | undefined;
@@ -214,7 +223,7 @@ export abstract class BasePage {
           textLength: text.length,
         });
 
-        const locator = typeof selector === 'string' ? this.page.locator(selector) : selector;
+        const locator = this.resolveLocator(selector);
 
         let lastError: Error | undefined;
         for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
@@ -409,12 +418,53 @@ export abstract class BasePage {
   }
 
   /**
+   * Resolve a locator with semantic-first strategy
+   */
+  private resolveLocator(selector: string | Locator): Locator {
+    if (typeof selector !== 'string') {
+      return selector;
+    }
+
+    warnOnNonSemantic(selector);
+
+    try {
+      return strictLocator(
+        this.page,
+        {
+          testId: selector,
+          name: selector,
+          css: selector,
+        },
+        { warnOnCss: true }
+      );
+    } catch {
+      return this.page.locator(selector);
+    }
+  }
+
+  /**
    * Generate selector strategies for smart element location
    */
   private generateSelectorStrategies(identifier: string): string[] {
     const strategies: string[] = [];
 
-    // If it looks like a valid CSS selector, try it first
+    // Data-testid variations (semantic first)
+    strategies.push(`[data-testid="${identifier}"]`);
+    strategies.push(`[data-test="${identifier}"]`);
+    strategies.push(`[data-cy="${identifier}"]`);
+
+    // ARIA label and roles
+    strategies.push(`[aria-label="${identifier}"]`);
+    
+    // Name attribute
+    strategies.push(`[name="${identifier}"]`);
+
+    // ID (if no spaces)
+    if (!identifier.includes(' ')) {
+      strategies.push(`#${identifier}`);
+    }
+
+    // If it looks like a valid CSS selector, try it after semantic options
     if (
       identifier.includes('[') ||
       identifier.startsWith('#') ||
@@ -422,22 +472,6 @@ export abstract class BasePage {
       identifier.includes('>')
     ) {
       strategies.push(identifier);
-    }
-
-    // Data-testid variations
-    strategies.push(`[data-testid="${identifier}"]`);
-    strategies.push(`[data-test="${identifier}"]`);
-    strategies.push(`[data-cy="${identifier}"]`);
-
-    // ARIA label
-    strategies.push(`[aria-label="${identifier}"]`);
-
-    // Name attribute
-    strategies.push(`[name="${identifier}"]`);
-
-    // ID (if no spaces)
-    if (!identifier.includes(' ')) {
-      strategies.push(`#${identifier}`);
     }
 
     // Text content

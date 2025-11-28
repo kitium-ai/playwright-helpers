@@ -147,6 +147,7 @@
     "publish:dry-run:token": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
     "prepublishOnly": "npm run verify",
     "verify": "npm run lint && npm run build",
+    "verify:test-quality": "node dist/reporting/quality-scorecard.js",
     "release": "pnpm version && pnpm install --lockfile-only"
   },
   "dependencies": {
