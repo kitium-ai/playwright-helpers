@@ -4,11 +4,10 @@
  * Note: Prefer using @kitiumai/test-core/async retry for new code
  */
 
-import { retry as retryCore, sleep, waitFor } from '@kitiumai/test-core/async';
+import { retry as retryCore, sleep, waitFor } from '@kitiumai/test-core';
 
 // Re-export from test-core
-export { retry as retryWithBackoff, sleep } from '@kitiumai/test-core/async';
-export { waitFor as waitUntil } from '@kitiumai/test-core/async';
+export { retry as retryWithBackoff, sleep, waitFor as waitUntil } from '@kitiumai/test-core';
 
 export interface RetryOptions {
   maxAttempts?: number;
@@ -92,7 +91,7 @@ export async function pollForValue<T>(
   options: RetryOptions & { timeoutMs?: number } = {}
 ): Promise<T> {
   const { timeoutMs = 10000 } = options;
-  const { waitForValue: waitForValueCore } = await import('@kitiumai/test-core/async');
+  const { waitForValue: waitForValueCore } = await import('@kitiumai/test-core');
 
   return waitForValueCore(getValue, predicate, { timeout: timeoutMs });
 }

@@ -7,7 +7,7 @@ import {
   EnhancedTestError,
   TestErrorMessages,
   type ErrorContext,
-} from '@kitiumai/test-core/errors';
+} from '@kitiumai/test-core';
 
 /**
  * Playwright-specific enhanced error

@@ -3,7 +3,7 @@
  * Extends @kitiumai/lint with Playwright-specific overrides
  */
 
-import { baseConfig, typeScriptConfig } from '@kitiumai/lint/eslint';
+import { eslintBaseConfig, eslintTypeScriptConfig } from '@kitiumai/lint';
 
 export default [
   {
@@ -35,8 +35,8 @@ export default [
       'prettier.config.cjs',
     ],
   },
-  ...baseConfig,
-  ...typeScriptConfig,
+  ...eslintBaseConfig,
+  ...eslintTypeScriptConfig,
   {
     name: 'playwright-helpers-overrides',
     files: ['**/*.{ts,tsx}'],

@@ -4,7 +4,7 @@
  */
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core/logger';
+import { getTestLogger } from '@kitiumai/test-core';
 import * as fs from 'fs';
 import * as path from 'path';
 

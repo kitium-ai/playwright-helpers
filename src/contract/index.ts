@@ -5,7 +5,7 @@
 
 import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core/logger';
+import { getTestLogger } from '@kitiumai/test-core';
 
 export interface ContractValidationResult {
   passed: boolean;

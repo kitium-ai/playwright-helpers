@@ -5,7 +5,7 @@
  */
 
 import { type Page, defineConfig, type PlaywrightTestConfig, devices } from '@playwright/test';
-import { getConfigManager } from '@kitiumai/test-core/config';
+import { getConfigManager } from '@kitiumai/test-core';
 
 export type AppType = 'spa' | 'mpa' | 'pwa' | 'mobile' | 'desktop';
 export type TestFeature =

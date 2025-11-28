@@ -5,7 +5,7 @@
 
 import { type Page, type Route } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core/logger';
+import { getTestLogger } from '@kitiumai/test-core';
 
 export interface MockResponse {
   status?: number;

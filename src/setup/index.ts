@@ -10,8 +10,7 @@ import {
   type PlaywrightTestConfig,
 } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core/logger';
-import { getConfigManager } from '@kitiumai/test-core/config';
+import { getTestLogger, getConfigManager } from '@kitiumai/test-core';
 
 export interface TestFixtures {
   baseUrl: string;

@@ -6,7 +6,7 @@
 import { type Page, expect } from '@playwright/test';
 import { createFormHelper, createNavigationHelper } from '../testing';
 import type { LoginCredentials } from '../auth';
-import { getConfigManager } from '@kitiumai/test-core/config';
+import { getConfigManager } from '@kitiumai/test-core';
 
 // Re-export LoginCredentials from auth for consistency
 export type { LoginCredentials } from '../auth';

@@ -5,7 +5,7 @@
 
 import type { Page, BrowserContext } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core/logger';
+import { getTestLogger } from '@kitiumai/test-core';
 import { traceTest } from '../tracing';
 
 export interface LoginCredentials {

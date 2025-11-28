@@ -5,8 +5,7 @@
 
 import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core/logger';
-import { retry as retryCore, sleep } from '@kitiumai/test-core/async';
+import { getTestLogger, retry as retryCore, sleep } from '@kitiumai/test-core';
 
 export interface CircuitBreakerOptions {
   threshold: number; // Number of failures before opening

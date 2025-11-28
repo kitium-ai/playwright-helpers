@@ -6,14 +6,17 @@
 
 import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core/logger';
+import {
+  getTestLogger,
+  type Factory,
+  createBuilder,
+  createFactory,
+  BuilderGenerators as Generators,
+} from '@kitiumai/test-core';
 
 // Re-export from test-core
-export type { Factory } from '@kitiumai/test-core/builders';
-export { createBuilder, createFactory, Generators } from '@kitiumai/test-core/builders';
-
-// Import for deprecated exports
-import { createBuilder, createFactory } from '@kitiumai/test-core/builders';
+export type { Factory };
+export { createBuilder, createFactory, Generators };
 
 // Note: These are legacy exports for backward compatibility
 // Users should migrate to using test-core directly
