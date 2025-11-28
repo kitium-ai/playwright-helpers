@@ -231,6 +231,8 @@ export async function cleanupAfterTest(page?: Page, context?: BrowserContext): P
 
 // Enhanced presets
 export * from './presets';
+export * from './fixtures';
+export * from './scaffolder';
 
 /**
  * Test configuration generator

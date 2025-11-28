@@ -316,3 +316,33 @@ export async function setupTracePropagation(page: Page): Promise<void> {
 
   logger.debug('Trace propagation setup complete');
 }
+
+export interface TraceExportOptions {
+  collectorUrl: string;
+  serviceName?: string;
+}
+
+/**
+ * Export collected spans to an OTLP-compatible collector
+ */
+export async function exportTracesToCollector(options: TraceExportOptions): Promise<Response> {
+  const traceManager = getTraceManager();
+  const spans = traceManager.exportSpans();
+  const payload = {
+    resource: { service: options.serviceName ?? 'playwright-tests' },
+    spans,
+  };
+
+  return await fetch(options.collectorUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Attach trace identifiers to artifact names for correlation
+ */
+export function stitchArtifactsWithTrace(traceId: string, artifacts: string[]): string[] {
+  return artifacts.map((artifact) => `${artifact}?traceId=${traceId}`);
+}
