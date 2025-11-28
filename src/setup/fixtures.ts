@@ -77,7 +77,7 @@ export const coreTest = base.extend<CoreFixtures>({
     const flow = new LoginFlow(page, { baseUrl: baseURL ?? 'http://localhost:3000' });
     await use(flow);
   },
-  accessibility: async ({}, use) => {
+  accessibility: async (_fixtures, use) => {
     await use(new AccessibilityChecker());
   },
   consoleLogs: async ({ page }, use) => {

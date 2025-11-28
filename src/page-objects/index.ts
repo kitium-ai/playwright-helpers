@@ -110,7 +110,10 @@ export abstract class BasePage {
         { testId: identifier, name: identifier },
         { warnOnCss: true }
       );
-      await locator.click({ timeout, ...(options?.force !== undefined && { force: options.force }) });
+      await locator.click({
+        timeout,
+        ...(options?.force !== undefined && { force: options.force }),
+      });
       return;
     } catch {
       // fallback to heuristics when semantic locator fails
