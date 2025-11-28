@@ -1,9 +1,10 @@
-import { test as base, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+import { type BrowserContext, type Page, test as base, type TestInfo } from '@playwright/test';
+
+import { AccessibilityChecker } from '../accessibility';
 import { LoginFlow } from '../flows';
 import { createNetworkMockManager, type NetworkMockManager } from '../network';
-import { AccessibilityChecker } from '../accessibility';
 import { getTraceManager } from '../tracing';
 
 export interface ConsoleLogCapture {
@@ -33,12 +34,16 @@ export interface CoreFixtures {
   storageStatePath?: string;
 }
 
-function createArtifactCollector(page: Page, testInfo: TestInfo, traceId: string): ArtifactCollector {
+function createArtifactCollector(
+  page: Page,
+  testInfo: TestInfo,
+  traceId: string
+): ArtifactCollector {
   const artifacts: string[] = [];
 
-  const toPath = (suffix: string, ext: string) => {
+  const toPath = (suffix: string, extension: string): string => {
     const safeTitle = testInfo.title.replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
-    return `test-results/${safeTitle}-${suffix}-${Date.now()}.${ext}`;
+    return `test-results/${safeTitle}-${suffix}-${Date.now()}.${extension}`;
   };
 
   return {
@@ -69,23 +74,23 @@ export const coreTest = base.extend<CoreFixtures>({
     manager.clearMocks();
   },
   loginFlow: async ({ page, baseURL }, use) => {
-    const flow = new LoginFlow(page, { baseUrl: baseURL });
+    const flow = new LoginFlow(page, { baseUrl: baseURL ?? 'http://localhost:3000' });
     await use(flow);
   },
-  accessibility: async ({ page }, use) => {
+  accessibility: async ({}, use) => {
     await use(new AccessibilityChecker());
   },
   consoleLogs: async ({ page }, use) => {
     const logs: ConsoleLogCapture[] = [];
     const logger = getTestLogger();
-    page.on('console', (msg) => {
+    page.on('console', (message) => {
       const context = contextManager.getContext();
       const entry: ConsoleLogCapture = {
-        type: msg.type(),
-        text: msg.text(),
-        args: msg.args().map((a) => a.toString()),
+        type: message.type(),
+        text: message.text(),
+        args: message.args().map((a) => a.toString()),
         traceId: context.traceId,
-        requestId: context.requestId,
+        requestId: context.requestId ?? 'unknown',
         timestamp: Date.now(),
       };
       logs.push(entry);
@@ -94,7 +99,7 @@ export const coreTest = base.extend<CoreFixtures>({
 
     await use(logs);
   },
-  traceSessionId: async ({}, use, testInfo) => {
+  traceSessionId: async (_fixtures, use, testInfo) => {
     const traceManager = getTraceManager();
     const spanId = traceManager.startSpan(`test:${testInfo.title}`, {
       'test.file': testInfo.file,
@@ -102,7 +107,11 @@ export const coreTest = base.extend<CoreFixtures>({
     });
     await use(spanId);
     const status = testInfo.status === 'passed' ? 'ok' : 'error';
-    traceManager.endSpan(spanId, status, testInfo.error); // best effort
+    if (testInfo.error) {
+      traceManager.endSpan(spanId, status, testInfo.error as Error);
+    } else {
+      traceManager.endSpan(spanId, status);
+    }
   },
   artifactCollector: async ({ page, traceSessionId }, use, testInfo) => {
     const collector = createArtifactCollector(page, testInfo, traceSessionId);

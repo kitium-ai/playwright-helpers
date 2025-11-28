@@ -2,7 +2,7 @@
  * Custom assertions for Playwright tests
  */
 
-import { type Page, type Locator, expect } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Assert element has specific text
@@ -134,13 +134,13 @@ export async function assertTextNotAppears(page: Page, text: string): Promise<vo
  */
 export async function assertConsoleMessages(page: Page, expectedMessages: string[]): Promise<void> {
   const messages: string[] = [];
-  page.on('console', (msg) => messages.push(msg.text()));
+  page.on('console', (message) => messages.push(message.text()));
 
   // Give time for messages to accumulate
   await page.waitForTimeout(100);
 
   expectedMessages.forEach((expected) => {
-    if (!messages.some((msg) => msg.includes(expected))) {
+    if (!messages.some((message) => message.includes(expected))) {
       throw new Error(`Expected console message containing '${expected}' not found`);
     }
   });
@@ -151,9 +151,9 @@ export async function assertConsoleMessages(page: Page, expectedMessages: string
  */
 export async function assertNoConsoleErrors(page: Page): Promise<void> {
   const errors: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      errors.push(msg.text());
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      errors.push(message.text());
     }
   });
 

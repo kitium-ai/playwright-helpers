@@ -35,8 +35,30 @@ export default [
       'prettier.config.cjs',
     ],
   },
-  ...eslintBaseConfig,
-  ...eslintTypeScriptConfig,
+  ...eslintBaseConfig.map((config) => {
+    if (config.rules?.['no-restricted-imports']) {
+      return {
+        ...config,
+        rules: {
+          ...config.rules,
+          'no-restricted-imports': 'off',
+        },
+      };
+    }
+    return config;
+  }),
+  ...eslintTypeScriptConfig.map((config) => {
+    if (config.rules?.['no-restricted-imports']) {
+      return {
+        ...config,
+        rules: {
+          ...config.rules,
+          'no-restricted-imports': 'off',
+        },
+      };
+    }
+    return config;
+  }),
   {
     name: 'playwright-helpers-overrides',
     files: ['**/*.{ts,tsx}'],
@@ -52,6 +74,8 @@ export default [
           selector: 'variable',
           modifiers: ['const'],
           format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          leadingUnderscore: 'allow',
+          trailingUnderscore: 'allow',
         },
         {
           selector: 'objectLiteralProperty',

@@ -3,14 +3,14 @@
  * Uses @kitiumai/test-core for configuration management
  */
 
+import { contextManager } from '@kitiumai/logger';
+import { getConfigManager, getTestLogger } from '@kitiumai/test-core';
 import {
-  test as base,
   type BrowserContext,
   type Page,
   type PlaywrightTestConfig,
+  test as base,
 } from '@playwright/test';
-import { contextManager } from '@kitiumai/logger';
-import { getTestLogger, getConfigManager } from '@kitiumai/test-core';
 
 export interface TestFixtures {
   baseUrl: string;
@@ -151,19 +151,19 @@ export async function setupPageForTesting(page: Page): Promise<void> {
 
   // Setup console message handler with context-aware logging
   const logger = getTestLogger();
-  page.on('console', (msg) => {
+  page.on('console', (message) => {
     const context = contextManager.getContext();
     const logData = {
-      type: msg.type(),
-      text: msg.text(),
+      type: message.type(),
+      text: message.text(),
       traceId: context.traceId,
       requestId: context.requestId,
       pageUrl: page.url(),
     };
 
-    if (msg.type() === 'error') {
+    if (message.type() === 'error') {
       logger.error('Browser console error', logData);
-    } else if (msg.type() === 'warning') {
+    } else if (message.type() === 'warning') {
       logger.warn('Browser console warning', logData);
     }
   });
@@ -230,8 +230,8 @@ export async function cleanupAfterTest(page?: Page, context?: BrowserContext): P
 }
 
 // Enhanced presets
-export * from './presets';
 export * from './fixtures';
+export * from './presets';
 export * from './scaffolder';
 
 /**

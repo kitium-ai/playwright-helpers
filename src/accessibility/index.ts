@@ -2,7 +2,7 @@
  * Accessibility testing helpers for Playwright
  */
 
-import type { Page, Locator } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 export interface A11yIssue {
   type: 'error' | 'warning' | 'info';
@@ -35,10 +35,10 @@ export class AccessibilityChecker {
     for (const img of images) {
       const alt = await img.getAttribute('alt');
       if (!alt || alt.trim() === '') {
-        const src = await img.getAttribute('src');
+        const source = await img.getAttribute('src');
         issues.push({
           type: 'error',
-          message: `Image missing alt text: ${src}`,
+          message: `Image missing alt text: ${source}`,
           element: 'img',
           code: 'image-alt',
         });
@@ -58,7 +58,7 @@ export class AccessibilityChecker {
     let previousLevel = 0;
 
     for (const heading of headings) {
-      const tagName = await heading.evaluate((el) => el.tagName);
+      const tagName = await heading.evaluate((element) => element.tagName);
       const currentLevel = parseInt(tagName.charAt(1));
 
       if (currentLevel > previousLevel + 1) {
@@ -123,8 +123,8 @@ export class AccessibilityChecker {
     const elements = await page.locator('*:visible').all();
     for (const element of elements.slice(0, 100)) {
       // Sample check to avoid performance issues
-      const styles = await element.evaluate((el) => {
-        const computed = window.getComputedStyle(el);
+      const styles = await element.evaluate((element_) => {
+        const computed = window.getComputedStyle(element_);
         return {
           color: computed.color,
           backgroundColor: computed.backgroundColor,
@@ -188,7 +188,7 @@ export class AccessibilityChecker {
     const elementsWithRole = await page.locator('[role]').all();
     for (const element of elementsWithRole) {
       const role = await element.getAttribute('role');
-      const tag = await element.evaluate((el) => el.tagName);
+      const tag = await element.evaluate((element_) => element_.tagName);
 
       // Check for common aria issues
       if (role === 'button' && tag !== 'BUTTON' && tag !== 'A') {
@@ -221,9 +221,9 @@ export class AccessibilityChecker {
     issues.push(...(await this.checkAriaAttributes(page)));
 
     const stats = {
-      errors: issues.filter((i) => i.type === 'error').length,
-      warnings: issues.filter((i) => i.type === 'warning').length,
-      info: issues.filter((i) => i.type === 'info').length,
+      errors: issues.filter((index) => index.type === 'error').length,
+      warnings: issues.filter((index) => index.type === 'warning').length,
+      info: issues.filter((index) => index.type === 'info').length,
     };
 
     return {
@@ -240,8 +240,8 @@ export class AccessibilityChecker {
     const result = await this.fullCheck(page);
     if (!result.passes) {
       const errorMessages = result.issues
-        .filter((i) => i.type === 'error')
-        .map((i) => `- ${i.message}`)
+        .filter((index) => index.type === 'error')
+        .map((index) => `- ${index.message}`)
         .join('\n');
       throw new Error(`Accessibility errors found:\n${errorMessages}`);
     }
@@ -271,15 +271,15 @@ export async function assertHasRole(locator: Locator, role: string): Promise<voi
  * Assert element is focusable
  */
 export async function assertIsFocusable(locator: Locator): Promise<void> {
-  const isFocusable = await locator.evaluate((el) => {
+  const isFocusable = await locator.evaluate((element) => {
     return (
-      el.tabIndex !== -1 &&
-      (el instanceof HTMLButtonElement ||
-        el instanceof HTMLAnchorElement ||
-        el instanceof HTMLInputElement ||
-        el instanceof HTMLSelectElement ||
-        el instanceof HTMLTextAreaElement ||
-        el.getAttribute('role') === 'button')
+      element.tabIndex !== -1 &&
+      (element instanceof HTMLButtonElement ||
+        element instanceof HTMLAnchorElement ||
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLSelectElement ||
+        element instanceof HTMLTextAreaElement ||
+        element.getAttribute('role') === 'button')
     );
   });
 

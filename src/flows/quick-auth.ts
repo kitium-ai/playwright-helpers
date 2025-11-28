@@ -4,10 +4,11 @@
  * Uses @kitiumai/test-core for configuration management
  */
 
-import { type Page } from '@playwright/test';
-import { LoginFlow } from './index';
-import type { LoginCredentials } from '../auth';
 import { getConfigManager } from '@kitiumai/test-core';
+import { type Page } from '@playwright/test';
+
+import type { LoginCredentials } from '../auth';
+import { LoginFlow } from './index';
 
 export interface QuickAuthOptions {
   baseUrl?: string;
@@ -46,14 +47,14 @@ export class QuickAuth {
   /**
    * Complete login with full verification and optional features
    */
-  async complete(params: {
+  async complete(parameters: {
     credentials: LoginCredentials;
     verify?: boolean;
     checkA11y?: boolean;
     screenshot?: boolean;
     debug?: boolean;
   }): Promise<void> {
-    const { credentials, verify = true, checkA11y, screenshot, debug } = params;
+    const { credentials, verify = true, checkA11y, screenshot, debug } = parameters;
 
     if (debug) {
       console.log(`🔐 Logging in as: ${credentials.email ?? credentials.username}`);

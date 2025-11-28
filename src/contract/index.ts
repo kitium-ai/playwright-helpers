@@ -3,9 +3,10 @@
  * OpenAPI/Swagger validation and schema checking
  */
 
-import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+import type { Page } from '@playwright/test';
+
 import { createNetworkMockManager, type NetworkMockManager } from '../network';
 
 export interface ContractValidationResult {
@@ -75,12 +76,12 @@ export class ContractValidator {
         pathCount: Object.keys(this.spec.paths ?? {}).length,
       });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const error_ = error instanceof Error ? error : new Error(String(error));
       this.logger.error('Failed to load OpenAPI specification', {
         traceId: context.traceId,
-        error: err.message,
+        error: error_.message,
       });
-      throw err;
+      throw error_;
     }
   }
 
@@ -351,7 +352,9 @@ export class ContractMockManager {
       return;
     }
 
-    const missing = Object.keys(schema).filter((key) => !(key in (fixture as Record<string, unknown>)));
+    const missing = Object.keys(schema).filter(
+      (key) => !(key in (fixture as Record<string, unknown>))
+    );
     if (missing.length > 0) {
       throw new Error(`Fixture missing required contract keys: ${missing.join(', ')}`);
     }
@@ -370,9 +373,17 @@ export class ContractMockManager {
     await this.validator.validateRequest(method, path, fixture as unknown);
 
     await page.route(path, async (route) => {
-      const result = await this.validator.validateRequest(method, path, route.request().postDataJSON());
+      const result = await this.validator.validateRequest(
+        method,
+        path,
+        route.request().postDataJSON()
+      );
       if (!result.passed) {
-        this.logger.warn('Contract validation failed for mocked route', { path, method, violations: result.violations });
+        this.logger.warn('Contract validation failed for mocked route', {
+          path,
+          method,
+          violations: result.violations,
+        });
       }
       await route.fulfill({
         status,

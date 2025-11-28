@@ -3,10 +3,11 @@
  * Provides common user flows and multi-step operations
  */
 
-import { type Page, expect } from '@playwright/test';
-import { createFormHelper, createNavigationHelper } from '../testing';
-import type { LoginCredentials } from '../auth';
 import { getConfigManager } from '@kitiumai/test-core';
+import { expect, type Page } from '@playwright/test';
+
+import type { LoginCredentials } from '../auth';
+import { createFormHelper, createNavigationHelper } from '../testing';
 
 // Re-export LoginCredentials from auth for consistency
 export type { LoginCredentials } from '../auth';
@@ -381,9 +382,9 @@ export class MultiStepOperation {
         await step.action();
         this.onStepComplete?.(step.name);
       } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        this.onError?.(step.name, err);
-        throw new Error(`Step '${step.name}' failed: ${err.message}`);
+        const error_ = error instanceof Error ? error : new Error(String(error));
+        this.onError?.(step.name, error_);
+        throw new Error(`Step '${step.name}' failed: ${error_.message}`);
       }
     }
   }
@@ -404,13 +405,13 @@ export class MultiStepOperation {
       }
     } catch (error) {
       // Rollback executed steps in reverse order
-      for (let i = executedSteps.length - 1; i >= 0; i--) {
-        const rollback = rollbackActions.find((r) => r.name === executedSteps[i]);
+      for (let index = executedSteps.length - 1; index >= 0; index--) {
+        const rollback = rollbackActions.find((r) => r.name === executedSteps[index]);
         if (rollback) {
           try {
             await rollback.action();
           } catch (rollbackError) {
-            console.error(`Rollback for step '${executedSteps[i]}' failed:`, rollbackError);
+            console.error(`Rollback for step '${executedSteps[index]}' failed:`, rollbackError);
           }
         }
       }

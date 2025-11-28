@@ -3,10 +3,11 @@
  * Custom HTML reports, analytics dashboard, and flaky test detection
  */
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
-import * as fs from 'fs';
-import * as path from 'path';
 
 export interface TestExecution {
   testName: string;

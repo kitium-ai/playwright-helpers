@@ -3,9 +3,10 @@
  * Circuit breaker, timeout management, and chaos testing utilities
  */
 
-import type { Page } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger, retry as retryCore, sleep } from '@kitiumai/test-core';
+
+import type { Page } from '@playwright/test';
 
 export interface CircuitBreakerOptions {
   threshold: number; // Number of failures before opening

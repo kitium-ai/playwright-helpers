@@ -3,8 +3,9 @@
  * Provides reusable patterns for test data, error scenarios, and common operations
  */
 
-import type { Page, BrowserContext } from '@playwright/test';
-import { createStorageHelper, createE2ETestData } from '../testing';
+import type { BrowserContext, Page } from '@playwright/test';
+
+import { createE2ETestData, createStorageHelper } from '../testing';
 
 /**
  * Test data setup and teardown helper
@@ -105,8 +106,8 @@ export class TestDataManager {
    */
   async cleanup(): Promise<void> {
     // Execute cleanup actions in reverse order
-    for (let i = this.cleanupActions.length - 1; i >= 0; i--) {
-      const action = this.cleanupActions[i];
+    for (let index = this.cleanupActions.length - 1; index >= 0; index--) {
+      const action = this.cleanupActions[index];
       if (action) {
         try {
           await action();

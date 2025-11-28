@@ -1,6 +1,8 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
+
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+
 import type { TestExecution } from './index';
 
 export interface QualityThresholds {
@@ -25,7 +27,10 @@ const defaultThresholds: QualityThresholds = {
   maximumDurationMs: 45000,
 };
 
-export function scoreQuality(metrics: QualityMetrics, thresholds: QualityThresholds = defaultThresholds): string[] {
+export function scoreQuality(
+  metrics: QualityMetrics,
+  thresholds: QualityThresholds = defaultThresholds
+): string[] {
   const violations: string[] = [];
   if (metrics.accessibilityCoverage < thresholds.minimumAccessibilityCoverage) {
     violations.push(
@@ -34,15 +39,21 @@ export function scoreQuality(metrics: QualityMetrics, thresholds: QualityThresho
   }
 
   if (metrics.averageRetries > thresholds.maximumAverageRetry) {
-    violations.push(`Average retry count ${metrics.averageRetries} exceeds ${thresholds.maximumAverageRetry}`);
+    violations.push(
+      `Average retry count ${metrics.averageRetries} exceeds ${thresholds.maximumAverageRetry}`
+    );
   }
 
   if (metrics.flakeRate > thresholds.maximumFlakeRate) {
-    violations.push(`Flake rate ${metrics.flakeRate * 100}% exceeds ${thresholds.maximumFlakeRate * 100}%`);
+    violations.push(
+      `Flake rate ${metrics.flakeRate * 100}% exceeds ${thresholds.maximumFlakeRate * 100}%`
+    );
   }
 
   if (metrics.averageDurationMs > thresholds.maximumDurationMs) {
-    violations.push(`Average duration ${metrics.averageDurationMs}ms exceeds ${thresholds.maximumDurationMs}ms`);
+    violations.push(
+      `Average duration ${metrics.averageDurationMs}ms exceeds ${thresholds.maximumDurationMs}ms`
+    );
   }
 
   return violations;
@@ -52,7 +63,9 @@ export function summarizeExecutions(executions: TestExecution[]): QualityMetrics
   const total = executions.length || 1;
   const failed = executions.filter((e) => e.status === 'failed').length;
   const flaky = executions.filter((e) => e.status === 'flaky').length;
-  const retries = executions.reduce((sum, e) => sum + (e.metadata?.retries as number | undefined ?? 0), 0) / total;
+  const retries =
+    executions.reduce((sum, e) => sum + ((e.metadata?.['retries'] as number | undefined) ?? 0), 0) /
+    total;
   const averageDuration = executions.reduce((sum, e) => sum + e.duration, 0) / total;
 
   return {
@@ -76,7 +89,9 @@ export async function runQualityGate(
 
   const violations = scoreQuality(parsed, thresholds);
   if (violations.length > 0) {
-    violations.forEach((violation) => logger.error('Test quality violation', { traceId: context.traceId, violation }));
+    violations.forEach((violation) =>
+      logger.error('Test quality violation', { traceId: context.traceId, violation })
+    );
     throw new Error(`Test quality gate failed: ${violations.join('; ')}`);
   }
 

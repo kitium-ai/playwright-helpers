@@ -3,9 +3,10 @@
  * XSS detection, CSRF validation, security headers, and OWASP checks
  */
 
-import type { Page, Response } from '@playwright/test';
 import { contextManager } from '@kitiumai/logger';
 import { getTestLogger } from '@kitiumai/test-core';
+
+import type { Page, Response } from '@playwright/test';
 
 export interface SecurityCheckResult {
   passed: boolean;
