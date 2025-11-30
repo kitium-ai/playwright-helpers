@@ -1,10 +1,13 @@
 /**
  * Visual regression and screenshot helpers for Playwright
+ * Integrates with @kitiumai/test-core/logger for structured logging
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core';
 import type { Locator, Page } from '@playwright/test';
 
 export interface ScreenshotOptions {
@@ -20,6 +23,7 @@ export interface ScreenshotOptions {
 export class VisualRegressionHelper {
   private readonly baselineDir: string;
   private readonly actualDir: string;
+  private readonly logger = getTestLogger();
 
   constructor(baselineDir = 'visual-baselines', actualDir = 'visual-actual') {
     this.baselineDir = baselineDir;
@@ -42,8 +46,16 @@ export class VisualRegressionHelper {
     name: string,
     options: ScreenshotOptions = {}
   ): Promise<{ matches: boolean; path: string }> {
+    const context = contextManager.getContext();
     const actualPath = path.join(this.actualDir, `${name}.png`);
     const baselinePath = path.join(this.baselineDir, `${name}.png`);
+
+    this.logger.debug('Taking screenshot for visual comparison', {
+      traceId: context.traceId,
+      name,
+      actualPath,
+      baselinePath,
+    });
 
     // Take screenshot
     await page.screenshot({
@@ -60,6 +72,18 @@ export class VisualRegressionHelper {
       const baseline = fs.readFileSync(baselinePath);
       const actual = fs.readFileSync(actualPath);
       matches = baseline.equals(actual);
+
+      this.logger.info('Visual comparison completed', {
+        traceId: context.traceId,
+        name,
+        matches,
+      });
+    } else {
+      this.logger.warn('No baseline found for comparison', {
+        traceId: context.traceId,
+        name,
+        baselinePath,
+      });
     }
 
     return { matches, path: actualPath };
@@ -69,7 +93,14 @@ export class VisualRegressionHelper {
    * Update baseline screenshot
    */
   async updateBaseline(page: Page, name: string, options: ScreenshotOptions = {}): Promise<string> {
+    const context = contextManager.getContext();
     const baselinePath = path.join(this.baselineDir, `${name}.png`);
+
+    this.logger.info('Updating baseline screenshot', {
+      traceId: context.traceId,
+      name,
+      baselinePath,
+    });
 
     await page.screenshot({
       path: baselinePath,

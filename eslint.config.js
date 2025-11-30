@@ -33,6 +33,7 @@ export default [
       'playwright.config.cjs',
       '*.config.js',
       '*.config.cjs',
+      '*.d.ts',
       'eslint.config.js',
       'prettier.config.cjs',
     ],
@@ -53,7 +54,7 @@ export default [
     // Exclude test files from TypeScript project-based linting
     const updatedConfig = {
       ...config,
-      ignores: [...(config.ignores || []), 'tests/**/*', '**/*.test.*', '**/*.spec.*'],
+      ignores: [...(config.ignores || []), 'tests/**/*', '**/*.test.*', '**/*.spec.*', '*.d.ts'],
     };
 
     if (config.rules?.['no-restricted-imports']) {

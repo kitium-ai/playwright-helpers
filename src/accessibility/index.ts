@@ -1,7 +1,10 @@
 /**
  * Accessibility testing helpers for Playwright
+ * Integrates with @kitiumai/test-core/logger for structured logging
  */
 
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core';
 import type { Locator, Page } from '@playwright/test';
 
 export interface A11yIssue {
@@ -25,10 +28,15 @@ export interface A11yCheckResult {
  * Accessibility checker
  */
 export class AccessibilityChecker {
+  private readonly logger = getTestLogger();
+
   /**
    * Check for missing alt text on images
    */
   async checkImageAltText(page: Page): Promise<A11yIssue[]> {
+    const context = contextManager.getContext();
+    this.logger.debug('Checking image alt text', { traceId: context.traceId });
+
     const issues: A11yIssue[] = [];
 
     const images = await page.locator('img').all();
@@ -52,6 +60,9 @@ export class AccessibilityChecker {
    * Check for proper heading hierarchy
    */
   async checkHeadingHierarchy(page: Page): Promise<A11yIssue[]> {
+    const context = contextManager.getContext();
+    this.logger.debug('Checking heading hierarchy', { traceId: context.traceId });
+
     const issues: A11yIssue[] = [];
 
     const headings = await page.locator('h1, h2, h3, h4, h5, h6').all();
@@ -81,6 +92,9 @@ export class AccessibilityChecker {
    * Check for form labels
    */
   async checkFormLabels(page: Page): Promise<A11yIssue[]> {
+    const context = contextManager.getContext();
+    this.logger.debug('Checking form labels', { traceId: context.traceId });
+
     const issues: A11yIssue[] = [];
 
     const inputs = await page.locator('input, textarea, select').all();

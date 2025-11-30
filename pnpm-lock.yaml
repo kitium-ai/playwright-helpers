@@ -13,24 +13,24 @@ importers:
   .:
     dependencies:
       '@kitiumai/logger':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@kitiumai/test-core':
+        specifier: ^2.0.1
+        version: 2.0.1(typescript@5.9.3)
     devDependencies:
       '@changesets/cli':
         specifier: ^2.27.1
         version: 2.29.8(@types/node@24.10.1)
       '@kitiumai/config':
-        specifier: ^2.0.0
-        version: 2.0.0(eslint@9.39.1)(prettier@3.7.1)(semantic-release@25.0.2(typescript@5.9.3))(typescript@5.9.3)
+        specifier: ^2.0.1
+        version: 2.0.1(eslint@9.39.1)(prettier@3.7.1)(semantic-release@25.0.2(typescript@5.9.3))(typescript@5.9.3)
       '@kitiumai/lint':
-        specifier: ^2.0.0
-        version: 2.0.0(@types/node@24.10.1)(eslint@9.39.1)(graphql@15.10.1)(typescript@5.9.3)
+        specifier: ^2.0.1
+        version: 2.0.1(@types/node@24.10.1)(eslint@9.39.1)(graphql@15.10.1)(typescript@5.9.3)
       '@kitiumai/scripts':
         specifier: ^1.0.0
         version: 1.0.0
-      '@kitiumai/test-core':
-        specifier: ^2.0.0
-        version: 2.0.0(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.44.0
         version: 1.57.0
@@ -320,12 +320,12 @@ packages:
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
 
-  '@kitiumai/config@2.0.0':
-    resolution: {integrity: sha512-7okSZw6yJeqQd0ZAH7iE65AvLIqjIH69uB0aqteR+rL2ywMPFs3vG5uEJci1rcC71b2zT5RBeloEE48gp9IbJw==}
+  '@kitiumai/config@2.0.1':
+    resolution: {integrity: sha512-rhtgWleVSNxstffSgW0LBeflTv+0WWYckRM0X4j6y9loSmgvrGk9U1+WWgMEjeM2JT8PNHSB1NdPH+a/0lDIJA==}
     hasBin: true
 
-  '@kitiumai/lint@2.0.0':
-    resolution: {integrity: sha512-TFjD1lV750YNxWRwZMvXlDIT/Km9IQAgvJEXL8DMxv2PlVpBw3aqNg27eRM1DkYAcn3/hY74GY1I/SvIfP2zyg==}
+  '@kitiumai/lint@2.0.1':
+    resolution: {integrity: sha512-4MZeYILHwxOKE4mR7hNKrpvZRG/1DW4YBLvoz7Hu+wh8Iiq9914zjSWu4jv6cIA5vDrAxHUUcURKL2eVH8TtzQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       eslint: ^9.15.0
@@ -337,16 +337,16 @@ packages:
       typescript:
         optional: true
 
-  '@kitiumai/logger@2.0.0':
-    resolution: {integrity: sha512-iY20fYymfc5VOyXPnQeIkl59mB6FX34HscSkAVjca5hU/jUujfUmuRxYYZ17xTmaQvkWcpCWyV9pSHuxCalMfQ==}
+  '@kitiumai/logger@2.0.1':
+    resolution: {integrity: sha512-rt3o1Zu8YSykH3amiDM7iLgrhEwyh9aNgOYn0dzjx7N869jBRfpAEjJsSZ3LBwlvQMqifSrPYrZv89ykpkpeDA==}
 
   '@kitiumai/scripts@1.0.0':
     resolution: {integrity: sha512-pgvbxPZBvZki0bOwiS3+s0ImzBd2iTIYC0/w3X3jUJwuIjNnTnbds0TWpaAELoRbjC2F2raTupN05zGFGbeAGw==}
     engines: {node: '>=18.0.0', npm: '>=9.0.0'}
     hasBin: true
 
-  '@kitiumai/test-core@2.0.0':
-    resolution: {integrity: sha512-nMzFh9aw6R0liNsgjqlnijsNyFz2g4kFFR3MnBgKfCe8w/1jLeGeuT4zJ+tlguURF/ddcH9Lha2iZ4wFwz8kUg==}
+  '@kitiumai/test-core@2.0.1':
+    resolution: {integrity: sha512-wysFRO3k/yLJo+EScotQz6m+Fx0VPQd1IAFSRWG742rMePw780ieG/jFyCJ4LhsFbv1EZ+nuPygNocIX0EK+7Q==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       typescript: ^5.6.0
@@ -4345,7 +4345,7 @@ snapshots:
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
 
-  '@kitiumai/config@2.0.0(eslint@9.39.1)(prettier@3.7.1)(semantic-release@25.0.2(typescript@5.9.3))(typescript@5.9.3)':
+  '@kitiumai/config@2.0.1(eslint@9.39.1)(prettier@3.7.1)(semantic-release@25.0.2(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@commitlint/config-conventional': 18.6.3
       '@eslint/js': 9.39.1
@@ -4370,7 +4370,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@kitiumai/lint@2.0.0(@types/node@24.10.1)(eslint@9.39.1)(graphql@15.10.1)(typescript@5.9.3)':
+  '@kitiumai/lint@2.0.1(@types/node@24.10.1)(eslint@9.39.1)(graphql@15.10.1)(typescript@5.9.3)':
     dependencies:
       '@eslint/js': 9.39.1
       '@next/eslint-plugin-next': 15.5.6
@@ -4413,7 +4413,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@kitiumai/logger@2.0.0':
+  '@kitiumai/logger@2.0.1':
     dependencies:
       '@opentelemetry/api': 1.9.0
       axios: 1.13.2
@@ -4434,9 +4434,9 @@ snapshots:
       execa: 8.0.1
       fs-extra: 11.3.2
 
-  '@kitiumai/test-core@2.0.0(typescript@5.9.3)':
+  '@kitiumai/test-core@2.0.1(typescript@5.9.3)':
     dependencies:
-      '@kitiumai/logger': 2.0.0
+      '@kitiumai/logger': 2.0.1
       typescript: 5.9.3
     transitivePeerDependencies:
       - debug
@@ -5212,7 +5212,7 @@ snapshots:
   camel-case@4.1.2:
     dependencies:
       pascal-case: 3.1.2
-      tslib: 2.2.0
+      tslib: 2.8.1
     optional: true
 
   caniuse-lite@1.0.30001757: {}
@@ -6856,7 +6856,7 @@ snapshots:
 
   lower-case@2.0.2:
     dependencies:
-      tslib: 2.2.0
+      tslib: 2.8.1
     optional: true
 
   lru-cache@10.4.3: {}
@@ -6974,7 +6974,7 @@ snapshots:
   no-case@3.0.4:
     dependencies:
       lower-case: 2.0.2
-      tslib: 2.2.0
+      tslib: 2.8.1
     optional: true
 
   node-emoji@2.2.0:
@@ -7215,7 +7215,7 @@ snapshots:
   pascal-case@3.1.2:
     dependencies:
       no-case: 3.0.4
-      tslib: 2.2.0
+      tslib: 2.8.1
     optional: true
 
   path-exists@3.0.0: {}

@@ -1,7 +1,10 @@
 /**
  * Performance monitoring and measurement for Playwright tests
+ * Integrates with @kitiumai/test-core/logger for structured logging
  */
 
+import { contextManager } from '@kitiumai/logger';
+import { getTestLogger } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
 
 type PerformanceWithMemory = Performance & {
@@ -45,6 +48,8 @@ export interface ResourceTiming {
 }
 
 export class PerformanceMonitor {
+  private readonly logger = getTestLogger();
+
   /**
    * Get page load metrics
    */
@@ -71,6 +76,9 @@ export class PerformanceMonitor {
    * Get Core Web Vitals
    */
   async getCoreWebVitals(page: Page): Promise<CoreWebVitals> {
+    const context = contextManager.getContext();
+    this.logger.debug('Measuring Core Web Vitals', { traceId: context.traceId });
+
     const vitals = await page.evaluate(() => {
       const metrics: CoreWebVitals = {};
 

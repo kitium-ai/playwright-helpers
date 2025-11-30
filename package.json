@@ -1,6 +1,6 @@
 {
   "name": "@kitiumai/playwright-helpers",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Playwright E2E test helpers for enterprise testing",
   "type": "module",
   "main": "dist/index.js",
@@ -155,6 +155,7 @@
     "dist/**/*.js",
     "dist/**/*.d.ts",
     "dist/**/*.d.ts.map",
+    "types.d.ts",
     "!dist/**/__tests__/**",
     "!dist/**/examples/**",
     "!dist/**/*.test.*",
@@ -198,17 +199,17 @@
     "release": "pnpm version && pnpm install --lockfile-only"
   },
   "dependencies": {
-    "@kitiumai/logger": "^2.0.0"
+    "@kitiumai/logger": "^2.0.1",
+    "@kitiumai/test-core": "^2.0.1"
   },
   "peerDependencies": {
     "@playwright/test": "^1.44.0",
     "typescript": "^5.6.0"
   },
   "devDependencies": {
-    "@kitiumai/config": "^2.0.0",
-    "@kitiumai/lint": "^2.0.0",
+    "@kitiumai/config": "^2.0.1",
+    "@kitiumai/lint": "^2.0.1",
     "@kitiumai/scripts": "^1.0.0",
-    "@kitiumai/test-core": "^2.0.0",
     "@changesets/cli": "^2.27.1",
     "@playwright/test": "^1.44.0",
     "@types/node": "^24.10.1",

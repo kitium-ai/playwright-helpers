@@ -755,6 +755,81 @@ test.describe('User Authentication', () => {
 });
 ```
 
+## Usage & Tree-Shaking
+
+This package is designed for optimal tree-shaking with granular subpath exports. Import only what you need:
+
+### Main Entry (All Features)
+
+```typescript
+import { ApplicationPage, createLoginFlow } from '@kitiumai/playwright-helpers';
+```
+
+### Granular Subpath Imports (Optimal Tree-Shaking)
+
+```typescript
+// Import specific utilities
+import { ApplicationPage, BasePage } from '@kitiumai/playwright-helpers/page-objects';
+import { createAssertion } from '@kitiumai/playwright-helpers/assertions';
+import { NetworkMockManager } from '@kitiumai/playwright-helpers/network';
+import { createLoginFlow } from '@kitiumai/playwright-helpers/auth';
+import { AccessibilityChecker } from '@kitiumai/playwright-helpers/accessibility';
+import { VisualTester } from '@kitiumai/playwright-helpers/visual';
+import { PerformanceMonitor } from '@kitiumai/playwright-helpers/performance';
+import { getPlaywrightPreset } from '@kitiumai/playwright-helpers/setup';
+```
+
+### Available Subpath Exports
+
+- `@kitiumai/playwright-helpers/page-objects` - Page Object Model framework
+- `@kitiumai/playwright-helpers/assertions` - Custom assertion helpers
+- `@kitiumai/playwright-helpers/network` - Network mocking and interception
+- `@kitiumai/playwright-helpers/auth` - Authentication flows (login/logout)
+- `@kitiumai/playwright-helpers/accessibility` - A11y testing utilities
+- `@kitiumai/playwright-helpers/visual` - Visual regression testing
+- `@kitiumai/playwright-helpers/performance` - Performance monitoring (Core Web Vitals)
+- `@kitiumai/playwright-helpers/setup` - Playwright configuration presets
+- `@kitiumai/playwright-helpers/testing` - Test fixtures and utilities
+- `@kitiumai/playwright-helpers/flows` - Reusable test flow patterns
+- `@kitiumai/playwright-helpers/patterns` - Common test patterns
+- `@kitiumai/playwright-helpers/tracing` - Distributed tracing support
+- `@kitiumai/playwright-helpers/resilience` - Circuit breaker and retry patterns
+- `@kitiumai/playwright-helpers/data` - Test data factories (re-exports from `@kitiumai/test-core`)
+- `@kitiumai/playwright-helpers/security` - Security testing utilities
+- `@kitiumai/playwright-helpers/contract` - Contract testing support
+- `@kitiumai/playwright-helpers/reporting` - Test reporting and quality scorecard
+
+### Tree-Shaking Benefits
+
+Using granular imports reduces bundle size by only including what you use:
+
+```typescript
+// ❌ Imports everything (larger bundle)
+import { ApplicationPage, AccessibilityChecker, PerformanceMonitor } from '@kitiumai/playwright-helpers';
+
+// ✅ Imports only what's needed (optimal)
+import { ApplicationPage } from '@kitiumai/playwright-helpers/page-objects';
+import { AccessibilityChecker } from '@kitiumai/playwright-helpers/accessibility';
+import { PerformanceMonitor } from '@kitiumai/playwright-helpers/performance';
+```
+
+The package has `"sideEffects": false` configured, enabling aggressive tree-shaking by bundlers.
+
+### Integration with @kitiumai/test-core and @kitiumai/logger
+
+This package leverages the latest APIs from `@kitiumai/test-core` and `@kitiumai/logger`:
+
+```typescript
+// Data builders re-exported from test-core
+import { createBuilder, createFactory, Generators } from '@kitiumai/playwright-helpers/data';
+
+// Or import directly from test-core
+import { createBuilder, retry, waitFor, sleep } from '@kitiumai/test-core';
+
+// Logger integration (automatic trace context propagation)
+import { getTestLogger, contextManager } from '@kitiumai/test-core';
+```
+
 ## TypeScript Support
 
 Full TypeScript support with comprehensive type definitions.
