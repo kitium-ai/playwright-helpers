@@ -3,11 +3,16 @@
  * Integrates with @kitiumai/logger for trace context propagation
  */
 
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import type { Page } from '@playwright/test';
 
-import { toError } from '../internal/errors';
-import { getPlaywrightLogger } from '../internal/logger';
+const toError = (value: unknown): Error =>
+  value instanceof Error ? value : new Error(String(value));
+
+const attributeTestOperation = 'test.operation';
+const attributeTestTraceId = 'test.traceId';
+const attributeTestSpanId = 'test.spanId';
+const headerContentType = 'Content-Type';
 
 export interface TraceSpan {
   name: string;
@@ -32,7 +37,7 @@ export interface TraceContext {
  * Trace manager for test operations
  */
 export class TraceManager {
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
   private readonly spans: Map<string, TraceSpan> = new Map();
   private currentSpanId: string | null = null;
 
@@ -53,9 +58,9 @@ export class TraceManager {
       ...(finalParentSpanId ? { parentSpanId: finalParentSpanId } : {}),
       attributes: {
         ...attributes,
-        'test.operation': name,
-        'test.traceId': traceId,
-        'test.spanId': spanId,
+        [attributeTestOperation]: name,
+        [attributeTestTraceId]: traceId,
+        [attributeTestSpanId]: spanId,
       },
       status: 'ok',
     };
@@ -228,11 +233,11 @@ export async function extractTraceContextFromPage(page: Page): Promise<TraceCont
     const context = await page.evaluate(() => {
       // Try to extract trace context from window or meta tags
       const traceId =
-        (window as unknown as { __TRACE_ID__?: string }).__TRACE_ID__ ??
+        (window as unknown as Record<'__TRACE_ID__', string | undefined>)['__TRACE_ID__'] ??
         document.querySelector('meta[name="trace-id"]')?.getAttribute('content') ??
         null;
       const spanId =
-        (window as unknown as { __SPAN_ID__?: string }).__SPAN_ID__ ??
+        (window as unknown as Record<'__SPAN_ID__', string | undefined>)['__SPAN_ID__'] ??
         document.querySelector('meta[name="span-id"]')?.getAttribute('content') ??
         null;
 
@@ -249,7 +254,10 @@ export async function extractTraceContextFromPage(page: Page): Promise<TraceCont
           spanId: context.spanId,
         },
         () => {
-          getPlaywrightLogger().debug('Extracted trace context from page', context);
+          createLogger('development', { serviceName: 'playwright-helpers' }).debug(
+            'Extracted trace context from page',
+            context
+          );
         }
       );
     }
@@ -265,8 +273,8 @@ export async function extractTraceContextFromPage(page: Page): Promise<TraceCont
  */
 export async function injectTraceContextIntoPage(page: Page, context: TraceContext): Promise<void> {
   await page.evaluate(({ traceId, spanId }) => {
-    (window as unknown as { __TRACE_ID__: string }).__TRACE_ID__ = traceId;
-    (window as unknown as { __SPAN_ID__: string }).__SPAN_ID__ = spanId;
+    (window as unknown as Record<'__TRACE_ID__', string>)['__TRACE_ID__'] = traceId;
+    (window as unknown as Record<'__SPAN_ID__', string>)['__SPAN_ID__'] = spanId;
 
     // Also inject as meta tags
     let traceMeta = document.querySelector('meta[name="trace-id"]');
@@ -291,7 +299,7 @@ export async function injectTraceContextIntoPage(page: Page, context: TraceConte
  * Setup automatic trace context propagation for a page
  */
 export async function setupTracePropagation(page: Page): Promise<void> {
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   // Extract trace context on page load
   page.on('load', async () => {
@@ -325,6 +333,12 @@ export interface TraceExportOptions {
 }
 
 /**
+ * Export traces to Jaeger
+ */
+// Note: Jaeger export via SDK removed for compatibility.
+// Use exportTracesToCollector() with your OTLP collector or implement SDK wiring in the app.
+
+/**
  * Export collected spans to an OTLP-compatible collector
  */
 export async function exportTracesToCollector(options: TraceExportOptions): Promise<Response> {
@@ -337,7 +351,7 @@ export async function exportTracesToCollector(options: TraceExportOptions): Prom
 
   return await fetch(options.collectorUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { [headerContentType]: 'application/json' },
     body: JSON.stringify(payload),
   });
 }

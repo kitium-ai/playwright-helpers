@@ -20,7 +20,7 @@ export class EnhancedPlaywrightError extends EnhancedTestError {
  * Playwright-specific error messages with helpful suggestions
  * Includes base test error messages plus Playwright-specific ones
  */
-export const PlaywrightErrorMessages = {
+const playwrightErrorMessages = {
   // Include base test error messages
   ...TestErrorMessages,
 
@@ -63,18 +63,21 @@ export const PlaywrightErrorMessages = {
   }),
 };
 
+export { playwrightErrorMessages as PlaywrightErrorMessages };
+
 // Backward compatibility alias
-export const ErrorMessages = PlaywrightErrorMessages;
+const errorMessages = playwrightErrorMessages;
+export { errorMessages as ErrorMessages };
 
 /**
  * Create enhanced Playwright error with context
  */
 export function createError(
-  type: keyof typeof PlaywrightErrorMessages,
+  type: keyof typeof playwrightErrorMessages,
   ...args: unknown[]
 ): EnhancedPlaywrightError {
   const errorData = (
-    PlaywrightErrorMessages[type] as (...args: unknown[]) => {
+    playwrightErrorMessages[type] as (...args: unknown[]) => {
       message: string;
       suggestion?: string;
       triedSelectors?: string[];

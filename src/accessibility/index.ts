@@ -3,10 +3,9 @@
  * Integrates with @kitiumai/logger for structured logging
  */
 
-import { contextManager } from '@kitiumai/logger';
+import { injectAxe } from 'axe-playwright';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import type { Locator, Page } from '@playwright/test';
-
-import { getPlaywrightLogger } from '../internal/logger';
 
 export interface A11yIssue {
   type: 'error' | 'warning' | 'info';
@@ -29,7 +28,7 @@ export interface A11yCheckResult {
  * Accessibility checker
  */
 export class AccessibilityChecker {
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   /**
    * Check for missing alt text on images
@@ -239,6 +238,56 @@ export class AccessibilityChecker {
       errors: issues.filter((index) => index.type === 'error').length,
       warnings: issues.filter((index) => index.type === 'warning').length,
       info: issues.filter((index) => index.type === 'info').length,
+    };
+
+    return {
+      passes: stats.errors === 0,
+      issues,
+      stats,
+    };
+  }
+
+  /**
+   * Run axe-core accessibility check
+   */
+  async runAxeCheck(
+    page: Page,
+    options?: { includedImpacts?: string[] }
+  ): Promise<A11yCheckResult> {
+    const context = contextManager.getContext();
+    this.logger.debug('Running axe-core accessibility check', { traceId: context.traceId });
+
+    await injectAxe(page);
+
+    // Use axe.run via the page context to obtain results
+    const axeResults = await page.evaluate(async (opts) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const axeAny: any = (window as any).axe;
+      const results = await axeAny.run(document, {
+        runOnly: opts?.includedImpacts ? { values: opts.includedImpacts } : undefined,
+      });
+      return results;
+    }, options);
+
+    const issues: A11yIssue[] = [];
+
+    // Convert axe violations to our format
+    for (const violation of axeResults.violations ?? []) {
+      for (const node of violation.nodes ?? []) {
+        issues.push({
+          type:
+            violation.impact === 'critical' || violation.impact === 'serious' ? 'error' : 'warning',
+          message: `${violation.help}: ${node.failureSummary}`,
+          element: Array.isArray(node.target) ? node.target.join(', ') : String(node.target),
+          code: violation.id,
+        });
+      }
+    }
+
+    const stats = {
+      errors: issues.filter((issue) => issue.type === 'error').length,
+      warnings: issues.filter((issue) => issue.type === 'warning').length,
+      info: 0,
     };
 
     return {

@@ -9,4 +9,3 @@ export function toError(value: unknown): Error {
   }
   return new Error(String(value));
 }
-

@@ -279,10 +279,10 @@ export const test = base.extend({
   myFixture: async ({ page }, use) => {
     // Setup
     const fixture = await setupMyFixture(page);
-    
+
     // Use
     await use(fixture);
-    
+
     // Teardown
     await fixture.cleanup();
   },
@@ -305,6 +305,7 @@ test(helpers): add tests for navigation helper
 ### Pull Request Process
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feat/add-visual-helper
    ```
@@ -315,6 +316,7 @@ test(helpers): add tests for navigation helper
    - Update documentation
 
 3. **Run quality checks**
+
    ```bash
    pnpm lint
    pnpm typecheck
@@ -323,6 +325,7 @@ test(helpers): add tests for navigation helper
    ```
 
 4. **Commit and push**
+
    ```bash
    git add .
    git commit -m "feat(helpers): add visual regression helper"
@@ -351,29 +354,36 @@ When reporting a bug, include:
 
 ```markdown
 ## Description
+
 Brief description of the bug
 
 ## Steps to Reproduce
+
 1. Go to '...'
 2. Click on '...'
 3. See error
 
 ## Expected Behavior
+
 What should happen
 
 ## Actual Behavior
+
 What actually happens
 
 ## Environment
+
 - Node version:
 - Playwright version:
 - OS:
 - Browser:
 
 ## Screenshots/Videos
+
 If applicable
 
 ## Additional Context
+
 Any other details
 ```
 
@@ -383,18 +393,23 @@ When requesting a feature:
 
 ```markdown
 ## Feature Description
+
 What feature would you like?
 
 ## Use Case
+
 Why is this feature needed?
 
 ## Proposed Solution
+
 How should it work?
 
 ## Alternatives Considered
+
 Other approaches you've thought about
 
 ## Additional Context
+
 Any other details
 ```
 
@@ -419,4 +434,3 @@ By contributing, you agree that your contributions will be licensed under the MI
 ---
 
 **Thank you for contributing to @kitiumai/playwright-helpers!** 🙏
-

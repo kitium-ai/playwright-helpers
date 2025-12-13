@@ -1,7 +1,5 @@
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import type { Locator, Page } from '@playwright/test';
-
-import { getPlaywrightLogger } from '../internal/logger';
 
 export interface SemanticSelector {
   testId?: string;
@@ -21,8 +19,8 @@ export function strictLocator(
   selector: SemanticSelector | string,
   options: StrictLocatorOptions = {}
 ): Locator {
-  const logger = getPlaywrightLogger();
-  const context = contextManager.getContext();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
+  const traceId = contextManager.getContext().traceId;
   const normalized =
     typeof selector === 'string' ? ({ css: selector } satisfies SemanticSelector) : selector;
 
@@ -44,7 +42,7 @@ export function strictLocator(
   if (normalized.css) {
     if (options.warnOnCss !== false) {
       logger.warn('Using CSS selector in strictLocator; prefer data-testid or ARIA role', {
-        traceId: context.traceId,
+        traceId,
         selector: normalized.css,
       });
     }
@@ -58,11 +56,11 @@ export function strictLocator(
 }
 
 export function warnOnNonSemantic(selector: string): void {
-  const logger = getPlaywrightLogger();
-  const context = contextManager.getContext();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
+  const traceId = contextManager.getContext().traceId;
   if (selector.startsWith('#') || selector.startsWith('.') || selector.includes('>')) {
     logger.warn('Non-semantic selector detected; prefer data-testid or role queries', {
-      traceId: context.traceId,
+      traceId,
       selector,
     });
   }

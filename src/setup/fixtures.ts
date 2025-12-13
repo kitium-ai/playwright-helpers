@@ -1,11 +1,16 @@
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { type BrowserContext, type Page, test as base, type TestInfo } from '@playwright/test';
 
-import { AccessibilityChecker } from '../accessibility';
-import { LoginFlow } from '../flows';
-import { getPlaywrightLogger } from '../internal/logger';
-import { createNetworkMockManager, type NetworkMockManager } from '../network';
-import { getTraceManager } from '../tracing';
+import { AccessibilityChecker } from '@kitiumai/playwright-helpers/accessibility';
+import { LoginFlow } from '@kitiumai/playwright-helpers/flows';
+import {
+  createNetworkMockManager,
+  type NetworkMockManager,
+} from '@kitiumai/playwright-helpers/network';
+import { getTraceManager } from '@kitiumai/playwright-helpers/tracing';
+
+const attributeTestFile = 'test.file';
+const attributeTestProject = 'test.project';
 
 export interface ConsoleLogCapture {
   type: string;
@@ -82,7 +87,7 @@ export const coreTest = base.extend<CoreFixtures>({
   },
   consoleLogs: async ({ page }, use) => {
     const logs: ConsoleLogCapture[] = [];
-    const logger = getPlaywrightLogger();
+    const logger = createLogger('development', { serviceName: 'playwright-helpers' });
     page.on('console', (message) => {
       const context = contextManager.getContext();
       const entry: ConsoleLogCapture = {
@@ -102,8 +107,8 @@ export const coreTest = base.extend<CoreFixtures>({
   traceSessionId: async (_fixtures, use, testInfo) => {
     const traceManager = getTraceManager();
     const spanId = traceManager.startSpan(`test:${testInfo.title}`, {
-      'test.file': testInfo.file,
-      'test.project': testInfo.project.name,
+      [attributeTestFile]: testInfo.file,
+      [attributeTestProject]: testInfo.project.name,
     });
     await use(spanId);
     const status = testInfo.status === 'passed' ? 'ok' : 'error';

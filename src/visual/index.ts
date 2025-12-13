@@ -5,11 +5,11 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { PNG } from 'pngjs';
+import pixelmatch from 'pixelmatch';
 
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import type { Locator, Page } from '@playwright/test';
-
-import { getPlaywrightLogger } from '../internal/logger';
 
 export interface ScreenshotOptions {
   fullPage?: boolean;
@@ -24,7 +24,7 @@ export interface ScreenshotOptions {
 export class VisualRegressionHelper {
   private readonly baselineDir: string;
   private readonly actualDir: string;
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   constructor(baselineDir = 'visual-baselines', actualDir = 'visual-actual') {
     this.baselineDir = baselineDir;
@@ -46,10 +46,11 @@ export class VisualRegressionHelper {
     page: Page,
     name: string,
     options: ScreenshotOptions = {}
-  ): Promise<{ matches: boolean; path: string }> {
+  ): Promise<{ matches: boolean; path: string; diffPixels?: number; diffPath?: string }> {
     const context = contextManager.getContext();
     const actualPath = path.join(this.actualDir, `${name}.png`);
     const baselinePath = path.join(this.baselineDir, `${name}.png`);
+    const diffPath = path.join(this.actualDir, `${name}-diff.png`);
 
     this.logger.debug('Taking screenshot for visual comparison', {
       traceId: context.traceId,
@@ -69,15 +70,28 @@ export class VisualRegressionHelper {
 
     // Compare with baseline if it exists
     let matches = false;
+    let diffPixels: number | undefined;
+
     if (fs.existsSync(baselinePath)) {
-      const baseline = fs.readFileSync(baselinePath);
-      const actual = fs.readFileSync(actualPath);
-      matches = baseline.equals(actual);
+      const baselineImg = PNG.sync.read(fs.readFileSync(baselinePath));
+      const actualImg = PNG.sync.read(fs.readFileSync(actualPath));
+
+      const { width, height } = baselineImg;
+      const diffImg = new PNG({ width, height });
+
+      diffPixels = pixelmatch(baselineImg.data, actualImg.data, diffImg.data, width, height, {
+        threshold: 0.1,
+      });
+
+      fs.writeFileSync(diffPath, PNG.sync.write(diffImg));
+
+      matches = (diffPixels ?? 0) === 0;
 
       this.logger.info('Visual comparison completed', {
         traceId: context.traceId,
         name,
         matches,
+        diffPixels,
       });
     } else {
       this.logger.warn('No baseline found for comparison', {
@@ -87,7 +101,21 @@ export class VisualRegressionHelper {
       });
     }
 
-    return { matches, path: actualPath };
+    const result: {
+      matches: boolean;
+      path: string;
+      diffPixels?: number;
+      diffPath?: string;
+    } = { matches, path: actualPath };
+
+    if (diffPixels !== undefined) {
+      result.diffPixels = diffPixels;
+    }
+    if ((diffPixels ?? 0) > 0) {
+      result.diffPath = diffPath;
+    }
+
+    return result;
   }
 
   /**

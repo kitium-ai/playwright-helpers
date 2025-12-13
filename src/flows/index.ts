@@ -6,12 +6,14 @@
 import { getConfigManager } from '@kitiumai/test-core';
 import { expect, type Page } from '@playwright/test';
 
-import type { LoginCredentials } from '../auth';
-import { toError } from '../internal/errors';
-import { createFormHelper, createNavigationHelper } from '../testing';
+import type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
+import { createFormHelper, createNavigationHelper } from '@kitiumai/playwright-helpers/testing';
 
 // Re-export LoginCredentials from auth for consistency
-export type { LoginCredentials } from '../auth';
+export type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
+
+const toError = (value: unknown): Error =>
+  value instanceof Error ? value : new Error(String(value));
 
 export interface UserFlowOptions {
   baseUrl?: string;

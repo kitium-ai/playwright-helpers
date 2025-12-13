@@ -3,17 +3,14 @@
  * Provides utilities for advanced E2E testing with Playwright
  */
 
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { expect, type Page } from '@playwright/test';
 
-import { getPlaywrightLogger } from '../internal/logger';
-
-type TestHelperWindow = Window & {
-  __testData?: Record<string, unknown>;
-  __dialogText?: string;
-  __dialogShown?: () => void;
-  __lastRect?: DOMRect;
-};
+type TestHelperWindow = Window &
+  Partial<Record<'__testData', Record<string, unknown>>> &
+  Partial<Record<'__dialogText', string>> &
+  Partial<Record<'__dialogShown', () => void>> &
+  Partial<Record<'__lastRect', DOMRect>>;
 
 type FormFieldValue = string | boolean;
 
@@ -599,7 +596,7 @@ export class ConsoleHelper {
   private logs: ConsoleLogEntry[] = [];
   private errors: ConsoleLogEntry[] = [];
   private warnings: ConsoleLogEntry[] = [];
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   constructor(page: Page) {
     const context = contextManager.getContext();

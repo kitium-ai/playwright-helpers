@@ -3,10 +3,10 @@
  * XSS detection, CSRF validation, security headers, and OWASP checks
  */
 
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import type { Page, Response } from '@playwright/test';
 
-import { getPlaywrightLogger } from '../internal/logger';
+const headerContentType = 'Content-Type';
 
 export interface SecurityCheckResult {
   passed: boolean;
@@ -31,7 +31,7 @@ export interface SecurityWarning {
  * Security checker for Playwright tests
  */
 export class SecurityChecker {
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   /**
    * Check for XSS vulnerabilities
@@ -80,7 +80,7 @@ export class SecurityChecker {
             details: { payload },
           });
         }
-      } catch (_error) {
+      } catch {
         // Ignore errors during XSS testing
       }
     }
@@ -360,4 +360,47 @@ export async function securityCheck(
 ): Promise<SecurityCheckResult> {
   const checker = createSecurityChecker();
   return checker.fullSecurityCheck(page, response, options);
+}
+
+/**
+ * Integrate with OWASP ZAP for automated scanning
+ */
+export class OWASPZAPIntegration {
+  private readonly zapUrl: string;
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
+
+  constructor(zapUrl = 'http://localhost:8080') {
+    this.zapUrl = zapUrl;
+  }
+
+  /**
+   * Run active scan
+   */
+  async runActiveScan(url: string): Promise<unknown> {
+    const context = contextManager.getContext();
+    this.logger.info('Starting OWASP ZAP active scan', { traceId: context.traceId, url });
+    const response = await fetch(`${this.zapUrl}/JSON/ascan/action/scan/`, {
+      method: 'POST',
+      headers: { [headerContentType]: 'application/json' },
+      body: JSON.stringify({ url, recurse: true }),
+    });
+    return response.json();
+  }
+
+  /**
+   * Get scan results
+   */
+  async getScanResults(scanId: string): Promise<unknown> {
+    const context = contextManager.getContext();
+    this.logger.debug('Fetching OWASP ZAP scan results', { traceId: context.traceId, scanId });
+    const response = await fetch(`${this.zapUrl}/JSON/ascan/view/status/?scanId=${scanId}`);
+    return response.json();
+  }
+}
+
+/**
+ * Create OWASP ZAP integration
+ */
+export function createOWASPZAPIntegration(zapUrl?: string): OWASPZAPIntegration {
+  return new OWASPZAPIntegration(zapUrl);
 }

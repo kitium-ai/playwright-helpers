@@ -3,10 +3,9 @@
  * Integrates with @kitiumai/logger for structured logging
  */
 
-import { contextManager } from '@kitiumai/logger';
+import lighthouse, { type Flags } from 'lighthouse';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import type { Page } from '@playwright/test';
-
-import { getPlaywrightLogger } from '../internal/logger';
 
 type PerformanceWithMemory = Performance & {
   memory?: {
@@ -49,7 +48,7 @@ export interface ResourceTiming {
 }
 
 export class PerformanceMonitor {
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   /**
    * Get page load metrics
@@ -71,6 +70,40 @@ export class PerformanceMonitor {
     });
 
     return metrics as PerformanceMetrics;
+  }
+
+  /**
+   * Run Lighthouse audit
+   */
+  async runLighthouseAudit(page: Page, options?: { categories?: string[] }): Promise<unknown> {
+    const context = contextManager.getContext();
+    this.logger.debug('Running Lighthouse audit', { traceId: context.traceId });
+
+    const url = page.url();
+    // Run Lighthouse in its own Chrome instance (avoids Playwright wsEndpoint coupling)
+    const flags: Partial<Flags> = {
+      logLevel: 'info',
+      output: 'json',
+    };
+    if (options?.categories) {
+      flags.onlyCategories = options.categories;
+    }
+    const runnerResult = await lighthouse(url, flags as Flags);
+
+    if (!runnerResult) {
+      throw new Error('Lighthouse audit failed');
+    }
+
+    const report = runnerResult.lhr;
+
+    this.logger.info('Lighthouse audit completed', {
+      traceId: context.traceId,
+      performance: report.categories?.['performance']?.score,
+      accessibility: report.categories?.['accessibility']?.score,
+      seo: report.categories?.['seo']?.score,
+    });
+
+    return report;
   }
 
   /**

@@ -6,8 +6,6 @@
 
 import { retry as retryCore, sleep, waitFor } from '@kitiumai/test-core';
 
-import { toError } from '../internal/errors';
-
 // Re-export from test-core
 export { retry as retryWithBackoff, sleep, waitFor as waitUntil } from '@kitiumai/test-core';
 
@@ -52,7 +50,7 @@ export async function retryWithBackoffLegacy<T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = toError(error);
+      lastError = error instanceof Error ? error : new Error(String(error));
 
       if (attempt === maxAttempts) {
         break;

@@ -7,7 +7,7 @@
 import { getConfigManager } from '@kitiumai/test-core';
 import { type Page } from '@playwright/test';
 
-import type { LoginCredentials } from '../auth';
+import type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
 import { LoginFlow } from './index';
 
 export interface QuickAuthOptions {

@@ -3,12 +3,21 @@
  * OpenAPI/Swagger validation and schema checking
  */
 
+import ajv from 'ajv';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import type { Page } from '@playwright/test';
 
-import { toError } from '../internal/errors';
-import { getPlaywrightLogger } from '../internal/logger';
-import { getTraceMeta } from '../internal/trace-context';
-import { createNetworkMockManager, type NetworkMockManager } from '../network';
+import {
+  createNetworkMockManager,
+  type NetworkMockManager,
+} from '@kitiumai/playwright-helpers/network';
+
+const headerContentType = 'Content-Type';
+const headerContractBacked = 'x-contract-backed';
+
+const getTraceId = (): string => contextManager.getContext().traceId;
+const toError = (value: unknown): Error =>
+  value instanceof Error ? value : new Error(String(value));
 
 export interface ContractValidationResult {
   passed: boolean;
@@ -44,13 +53,14 @@ export interface ContractedRouteOptions {
   status?: number;
   fixture?: unknown;
   schema?: Record<string, unknown>;
+  jsonSchema?: Record<string, unknown>; // Add JSON Schema support
 }
 
 /**
  * Contract validator for API testing
  */
 export class ContractValidator {
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
   private spec: OpenAPISpec | null = null;
 
   /**
@@ -59,7 +69,7 @@ export class ContractValidator {
   async loadSpec(specPathOrUrl: string): Promise<void> {
     this.logger.debug('Loading OpenAPI specification', {
       specPath: specPathOrUrl,
-      ...getTraceMeta(),
+      traceId: getTraceId(),
     });
 
     try {
@@ -73,16 +83,48 @@ export class ContractValidator {
       this.logger.info('OpenAPI specification loaded', {
         openapiVersion: this.spec.openapi ?? this.spec.swagger,
         pathCount: Object.keys(this.spec.paths ?? {}).length,
-        ...getTraceMeta(),
+        traceId: getTraceId(),
       });
     } catch (error) {
       const error_ = toError(error);
       this.logger.error('Failed to load OpenAPI specification', {
         error: error_.message,
-        ...getTraceMeta(),
+        traceId: getTraceId(),
       });
       throw error_;
     }
+  }
+
+  /**
+   * Validate data against JSON Schema
+   */
+  async validateJsonSchema(
+    data: unknown,
+    schema: Record<string, unknown>
+  ): Promise<ContractValidationResult> {
+    const violations: ContractViolation[] = [];
+    const warnings: ContractWarning[] = [];
+
+    const validator = new ajv({ allErrors: true });
+    const validate = validator.compile(schema);
+    const valid = validate(data);
+
+    if (!valid && validate.errors) {
+      validate.errors.forEach((error) => {
+        violations.push({
+          type: 'schema',
+          severity: 'error',
+          message: `${error.instancePath} ${error.message}`,
+          details: error as unknown as Record<string, unknown>,
+        });
+      });
+    }
+
+    return {
+      passed: violations.length === 0,
+      violations,
+      warnings,
+    };
   }
 
   /**
@@ -109,7 +151,7 @@ export class ContractValidator {
     this.logger.debug('Validating request against contract', {
       method,
       path,
-      ...getTraceMeta(),
+      traceId: getTraceId(),
     });
 
     // Find matching path in spec
@@ -221,7 +263,7 @@ export class ContractValidator {
       method,
       path,
       statusCode,
-      ...getTraceMeta(),
+      traceId: getTraceId(),
     });
 
     const specPath = this.findMatchingPath(path);
@@ -315,7 +357,7 @@ export class ContractValidator {
       method,
       path,
       responseStatus,
-      ...getTraceMeta(),
+      traceId: getTraceId(),
     });
 
     const requestResult = await this.validateRequest(method, path, requestBody);
@@ -337,7 +379,7 @@ export class ContractValidator {
 export class ContractMockManager {
   private readonly validator: ContractValidator;
   private readonly mockManager: NetworkMockManager;
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   constructor(validator: ContractValidator, mockManager = createNetworkMockManager()) {
     this.validator = validator;
@@ -363,8 +405,8 @@ export class ContractMockManager {
 
     this.mockManager.registerRoute(path, {
       status,
-      headers: { 'Content-Type': 'application/json', 'x-contract-backed': 'true' },
-      body: fixture ?? {},
+      headers: { [headerContentType]: 'application/json', [headerContractBacked]: 'true' },
+      body: (fixture ?? {}) as Record<string, unknown>,
     });
 
     await this.validator.validateRequest(method, path, fixture as unknown);
@@ -384,7 +426,7 @@ export class ContractMockManager {
       }
       await route.fulfill({
         status,
-        headers: { 'Content-Type': 'application/json', 'x-contract-backed': 'true' },
+        headers: { [headerContentType]: 'application/json', [headerContractBacked]: 'true' },
         body: JSON.stringify(fixture ?? {}),
       });
     });
@@ -421,7 +463,7 @@ export async function setupContractValidation(
   const validator = new ContractValidator();
   await validator.loadSpec(specPathOrUrl);
 
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   // Intercept API requests and validate
   await page.route('**/api/**', async (route) => {
@@ -441,7 +483,7 @@ export async function setupContractValidation(
           method,
           path,
           violations: result.violations,
-          ...getTraceMeta(),
+          traceId: getTraceId(),
         });
       }
 
@@ -452,7 +494,7 @@ export async function setupContractValidation(
         method,
         path,
         error: error_.message,
-        ...getTraceMeta(),
+        traceId: getTraceId(),
       });
       await route.continue();
     }
@@ -460,7 +502,7 @@ export async function setupContractValidation(
 
   logger.info('API contract validation setup complete', {
     specPath: specPathOrUrl,
-    ...getTraceMeta(),
+    traceId: getTraceId(),
   });
 
   return validator;

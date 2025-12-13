@@ -3,12 +3,11 @@
  * Custom HTML reports, analytics dashboard, and flaky test detection
  */
 
+import { allure } from 'allure-playwright';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { contextManager } from '@kitiumai/logger';
-
-import { getPlaywrightLogger } from '../internal/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 
 export interface TestExecution {
   testName: string;
@@ -65,7 +64,7 @@ export interface FlakyTestDetection {
  */
 export class TestExecutionRecorder {
   private readonly executions: Map<string, TestExecution[]> = new Map();
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   /**
    * Record test execution
@@ -105,6 +104,30 @@ export class TestExecutionRecorder {
    */
   clear(): void {
     this.executions.clear();
+  }
+
+  /**
+   * Attach screenshot to Allure report
+   */
+  attachScreenshotToAllure(name: string, screenshotPath: string): void {
+    const buffer = fs.readFileSync(screenshotPath);
+    allure.attachment(name, buffer, 'image/png');
+  }
+
+  /**
+   * Attach trace to Allure report
+   */
+  attachTraceToAllure(name: string, traceData: unknown): void {
+    allure.attachment(name, JSON.stringify(traceData, null, 2), 'application/json');
+  }
+
+  /**
+   * Add step to Allure report
+   */
+  addStepToAllure(name: string): void {
+    allure.step(name, async () => {
+      // Step implementation placeholder
+    });
   }
 }
 
@@ -248,7 +271,7 @@ export * from './quality-scorecard';
  */
 export class HTMLReportGenerator {
   private readonly outputDir: string;
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   constructor(outputDir = './test-results/reports') {
     this.outputDir = outputDir;
@@ -456,14 +479,14 @@ export class HTMLReportGenerator {
   }
 
   private escapeHtml(text: string): string {
-    const map: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;',
-    };
-    return text.replace(/[&<>"']/g, (m) => map[m] ?? m);
+    const escapeMap = new Map<string, string>([
+      ['&', '&amp;'],
+      ['<', '&lt;'],
+      ['>', '&gt;'],
+      ['"', '&quot;'],
+      ["'", '&#039;'],
+    ]);
+    return text.replace(/[&<>"']/g, (match) => escapeMap.get(match) ?? match);
   }
 }
 

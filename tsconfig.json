@@ -2,9 +2,11 @@
   "extends": "@kitiumai/config/tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "paths": {
+      "@kitiumai/playwright-helpers": ["src/index.ts"],
+      "@kitiumai/playwright-helpers/*": ["src/*"]
+    },
     "outDir": "./dist"
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

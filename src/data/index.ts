@@ -12,9 +12,7 @@ import {
 } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
 
-import { toError } from '../internal/errors';
-import { getPlaywrightLogger } from '../internal/logger';
-import { getTraceMeta } from '../internal/trace-context';
+import { contextManager, createLogger } from '@kitiumai/logger';
 
 // Re-export from test-core
 export type { Factory };
@@ -48,12 +46,13 @@ export async function fillFormWithTestData(
     suffix?: string;
   } = {}
 ): Promise<void> {
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   const { prefix = '', suffix = '' } = options;
 
+  const traceId = contextManager.getContext().traceId;
   logger.debug('Filling form with test data', {
     fieldCount: Object.keys(formData).length,
-    ...getTraceMeta(),
+    traceId,
   });
 
   for (const [field, value] of Object.entries(formData)) {
@@ -95,15 +94,15 @@ export async function fillFormWithTestData(
       if (!filled) {
         logger.warn(`Could not fill field: ${field}`, {
           triedSelectors: selectors,
-          ...getTraceMeta(),
+          traceId,
         });
       }
     } catch (error) {
-      const error_ = toError(error);
+      const error_ = error instanceof Error ? error : new Error(String(error));
       logger.error(`Error filling field: ${field}`, {
         field,
         error: error_.message,
-        ...getTraceMeta(),
+        traceId,
       });
     }
   }

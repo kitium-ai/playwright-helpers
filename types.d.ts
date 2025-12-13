@@ -1,3 +1,27 @@
+// Local ambient module declarations to satisfy TS when type packages are unavailable
+declare module 'pngjs' {
+  export class PNG {
+    constructor(options?: { width?: number; height?: number });
+    width: number;
+    height: number;
+    data: Uint8Array;
+    static sync: {
+      read(buffer: Buffer): PNG;
+      write(png: PNG): Buffer;
+    };
+  }
+}
+
+declare module 'pixelmatch' {
+  export default function pixelmatch(
+    img1: Uint8Array,
+    img2: Uint8Array,
+    output: Uint8Array,
+    width: number,
+    height: number,
+    options?: { threshold?: number }
+  ): number;
+}
 /**
  * TypeScript module declarations for @kitiumai/playwright-helpers
  * Provides type support for all subpath exports
@@ -122,7 +146,10 @@ declare module '@kitiumai/playwright-helpers/accessibility' {
     assertNoViolations(): Promise<void>;
   }
 
-  export function createAccessibilityChecker(page: Page, options?: A11yOptions): AccessibilityChecker;
+  export function createAccessibilityChecker(
+    page: Page,
+    options?: A11yOptions
+  ): AccessibilityChecker;
 
   export * from '@kitiumai/playwright-helpers/accessibility/index';
 }

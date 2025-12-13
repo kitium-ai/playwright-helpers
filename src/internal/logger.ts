@@ -16,4 +16,3 @@ export function getPlaywrightLogger(overrides?: Partial<LoggerConfig>): ILogger 
   }
   return internalLogger;
 }
-

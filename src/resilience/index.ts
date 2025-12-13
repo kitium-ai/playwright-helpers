@@ -6,9 +6,7 @@
 import { retry as retryCore, sleep } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
 
-import { toError } from '../internal/errors';
-import { getPlaywrightLogger } from '../internal/logger';
-import { getTraceMeta } from '../internal/trace-context';
+import { contextManager, createLogger } from '@kitiumai/logger';
 
 export interface CircuitBreakerOptions {
   threshold: number; // Number of failures before opening
@@ -26,7 +24,7 @@ export class CircuitBreaker {
   private failureCount = 0;
   private lastFailureTime: number | null = null;
   private readonly options: Required<CircuitBreakerOptions>;
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   constructor(options: CircuitBreakerOptions) {
     this.options = {
@@ -46,7 +44,7 @@ export class CircuitBreaker {
       this.logger.warn('Circuit breaker is open, operation rejected', {
         failureCount: this.failureCount,
         lastFailureTime: this.lastFailureTime,
-        ...getTraceMeta(),
+        traceId: contextManager.getContext().traceId,
       });
       throw new Error(
         `Circuit breaker is open. Too many failures (${this.failureCount}/${this.options.threshold})`
@@ -102,7 +100,7 @@ export class CircuitBreaker {
       this.logger.error('Circuit breaker opened due to failures', {
         failureCount: this.failureCount,
         threshold: this.options.threshold,
-        ...getTraceMeta(),
+        traceId: contextManager.getContext().traceId,
       });
     }
   }
@@ -130,7 +128,7 @@ export class CircuitBreaker {
  * Timeout manager with configurable strategies
  */
 export class TimeoutManager {
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   /**
    * Execute operation with timeout
@@ -151,7 +149,7 @@ export class TimeoutManager {
             this.logger.warn('Operation timed out', {
               timeoutMs,
               duration,
-              ...getTraceMeta(),
+              traceId: contextManager.getContext().traceId,
             });
 
             if (onTimeout) {
@@ -189,7 +187,7 @@ export class TimeoutManager {
           }
         );
       } catch (error) {
-        lastError = toError(error);
+        lastError = error instanceof Error ? error : new Error(String(error));
         if (attempt < timeouts.length - 1) {
           await sleep(1000 * (attempt + 1)); // Progressive delay
         }
@@ -204,7 +202,7 @@ export class TimeoutManager {
  * Chaos testing utilities
  */
 export class ChaosInjector {
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -217,7 +215,7 @@ export class ChaosInjector {
   async simulateNetworkFailure(durationMs = 5000): Promise<void> {
     this.logger.info('Injecting network failure', {
       durationMs,
-      ...getTraceMeta(),
+      traceId: contextManager.getContext().traceId,
     });
 
     void this.page.route('**/*', (route) => {
@@ -236,7 +234,7 @@ export class ChaosInjector {
   async simulateSlowNetwork(delayMs = 2000): Promise<void> {
     this.logger.info('Injecting slow network', {
       delayMs,
-      ...getTraceMeta(),
+      traceId: contextManager.getContext().traceId,
     });
 
     await this.page.route('**/*', async (route) => {
@@ -252,7 +250,7 @@ export class ChaosInjector {
     // failureRate: 0.0 to 1.0 (0% to 100%)
     this.logger.info('Injecting random failures', {
       failureRate,
-      ...getTraceMeta(),
+      traceId: contextManager.getContext().traceId,
     });
 
     void this.page.route('**/*', (route) => {
@@ -271,7 +269,7 @@ export class ChaosInjector {
     this.logger.info('Injecting server errors', {
       statusCode,
       durationMs,
-      ...getTraceMeta(),
+      traceId: contextManager.getContext().traceId,
     });
 
     const startTime = Date.now();
@@ -325,11 +323,11 @@ export async function withResilience<T>(
   options: ResilienceOptions,
   operation: () => Promise<T>
 ): Promise<T> {
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   logger.debug('Executing operation with resilience patterns', {
     options,
-    ...getTraceMeta(),
+    traceId: contextManager.getContext().traceId,
   });
 
   let wrappedOperation = operation;

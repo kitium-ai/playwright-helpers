@@ -3,13 +3,79 @@
  * Integrates with @kitiumai/logger for structured logging and tracing
  */
 
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { type Locator, type Page } from '@playwright/test';
 
-import { strictLocator, warnOnNonSemantic } from '../accessibility/semantic-locator';
-import { toError } from '../internal/errors';
-import { getPlaywrightLogger } from '../internal/logger';
-import { getTraceMeta } from '../internal/trace-context';
-import { traceTest } from '../tracing';
+import { traceTest } from '@kitiumai/playwright-helpers/tracing';
+
+type SemanticSelector = {
+  testId?: string;
+  role?: string;
+  name?: string | RegExp;
+  css?: string;
+};
+
+type StrictLocatorOptions = {
+  warnOnCss?: boolean;
+  requireSemantic?: boolean;
+};
+
+const toError = (value: unknown): Error =>
+  value instanceof Error ? value : new Error(String(value));
+
+const getTraceId = (): string => contextManager.getContext().traceId;
+
+const strictLocator = (
+  page: Page,
+  selector: SemanticSelector | string,
+  options: StrictLocatorOptions = {}
+): Locator => {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
+  const traceId = getTraceId();
+  const normalized =
+    typeof selector === 'string' ? ({ css: selector } satisfies SemanticSelector) : selector;
+
+  if (normalized.testId) {
+    return page.getByTestId(normalized.testId);
+  }
+
+  if (normalized.role) {
+    return page.getByRole(
+      normalized.role as never,
+      normalized.name ? { name: normalized.name as never } : undefined
+    );
+  }
+
+  if (normalized.name && typeof normalized.name === 'string') {
+    return page.getByText(normalized.name);
+  }
+
+  if (normalized.css) {
+    if (options.warnOnCss !== false) {
+      logger.warn('Using CSS selector in strictLocator; prefer data-testid or ARIA role', {
+        traceId,
+        selector: normalized.css,
+      });
+    }
+    if (options.requireSemantic) {
+      throw new Error(`CSS selector blocked by strictLocator: ${normalized.css}`);
+    }
+    return page.locator(normalized.css);
+  }
+
+  throw new Error('No semantic selector information provided');
+};
+
+const warnOnNonSemantic = (selector: string): void => {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
+  const traceId = getTraceId();
+  if (selector.startsWith('#') || selector.startsWith('.') || selector.includes('>')) {
+    logger.warn('Non-semantic selector detected; prefer data-testid or role queries', {
+      traceId,
+      selector,
+    });
+  }
+};
 
 export interface PageObjectOptions {
   baseUrl?: string;
@@ -25,7 +91,7 @@ export abstract class BasePage {
   protected waitTimeout: number;
   protected retryAttempts: number;
   protected autoScreenshot: boolean;
-  protected readonly logger = getPlaywrightLogger();
+  protected readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   constructor(page: Page, options: PageObjectOptions = {}) {
     this.page = page;
@@ -51,7 +117,7 @@ export abstract class BasePage {
           spanId,
           url,
           path,
-          ...getTraceMeta(),
+          traceId: getTraceId(),
         });
 
         await this.page.goto(url, { waitUntil: options?.waitUntil ?? 'domcontentloaded' });
@@ -60,7 +126,7 @@ export abstract class BasePage {
         this.logger.debug('Page navigation completed', {
           spanId,
           url: this.page.url(),
-          ...getTraceMeta(),
+          traceId: getTraceId(),
         });
       },
       { url, path, waitUntil: options?.waitUntil ?? 'domcontentloaded' }
@@ -129,7 +195,7 @@ export abstract class BasePage {
         }
         await locator.click(clickOptions);
         return;
-      } catch (_error) {
+      } catch {
         // Try next strategy
         continue;
       }
@@ -159,7 +225,7 @@ export abstract class BasePage {
         this.logger.debug('Clicking element', {
           spanId,
           selector: selectorString,
-          ...getTraceMeta(),
+          traceId: getTraceId(),
         });
 
         const locator = this.resolveLocator(selector);
@@ -178,7 +244,7 @@ export abstract class BasePage {
               spanId,
               selector: selectorString,
               attempt,
-              ...getTraceMeta(),
+              traceId: getTraceId(),
             });
             return;
           } catch (_error) {
@@ -189,7 +255,7 @@ export abstract class BasePage {
               selector: selectorString,
               attempt,
               error: error.message,
-              ...getTraceMeta(),
+              traceId: getTraceId(),
             });
 
             if (attempt < this.retryAttempts) {
@@ -226,7 +292,7 @@ export abstract class BasePage {
           spanId,
           selector: selectorString,
           textLength: text.length,
-          ...getTraceMeta(),
+          traceId: getTraceId(),
         });
 
         const locator = this.resolveLocator(selector);
@@ -241,7 +307,7 @@ export abstract class BasePage {
               spanId,
               selector: selectorString,
               attempt,
-              ...getTraceMeta(),
+              traceId: getTraceId(),
             });
             return;
           } catch (_error) {
@@ -252,7 +318,7 @@ export abstract class BasePage {
               selector: selectorString,
               attempt,
               error: error.message,
-              ...getTraceMeta(),
+              traceId: getTraceId(),
             });
 
             if (attempt < this.retryAttempts) {
@@ -304,7 +370,7 @@ export abstract class BasePage {
         const locator = this.page.locator(selector).first();
         await locator.waitFor({ state, timeout: Math.floor(timeout / strategies.length) });
         return locator;
-      } catch (_error) {
+      } catch {
         continue;
       }
     }
@@ -337,7 +403,7 @@ export abstract class BasePage {
         await field.waitFor({ state: 'visible', timeout: 2000 });
         await field.fill(value);
         return;
-      } catch (_error) {
+      } catch {
         continue;
       }
     }
@@ -504,7 +570,7 @@ export abstract class BasePage {
         const timestamp = Date.now();
         screenshotPath = `./test-results/screenshots/error-${action}-${timestamp}.png`;
         await this.page.screenshot({ path: screenshotPath, fullPage: true });
-      } catch (_e) {
+      } catch {
         // Ignore screenshot errors
       }
     }
@@ -603,11 +669,11 @@ export class ApplicationPage extends BasePage {
  * Create page object instance
  */
 export function createPageObject<T extends BasePage>(
-  PageObjectClass: new (page: Page, options?: PageObjectOptions) => T,
+  pageObjectClass: new (page: Page, options?: PageObjectOptions) => T,
   page: Page,
   options?: PageObjectOptions
 ): T {
-  return new PageObjectClass(page, options);
+  return new pageObjectClass(page, options);
 }
 
 /**

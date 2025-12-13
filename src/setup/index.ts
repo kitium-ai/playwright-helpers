@@ -3,7 +3,7 @@
  * Uses @kitiumai/test-core for configuration management
  */
 
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { getConfigManager } from '@kitiumai/test-core';
 import {
   type BrowserContext,
@@ -11,8 +11,6 @@ import {
   type PlaywrightTestConfig,
   test as base,
 } from '@playwright/test';
-
-import { getPlaywrightLogger } from '../internal/logger';
 
 export interface TestFixtures {
   baseUrl: string;
@@ -39,7 +37,32 @@ export const createTest = base.extend<TestFixtures>({
  * Playwright configuration presets
  * Uses @kitiumai/test-core for configuration management
  */
-export const PlaywrightPresets = {
+
+/**
+ * Mobile device presets
+ */
+export const mobileDevices = {
+  iPhone12: {
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    defaultBrowserType: 'webkit',
+  },
+  ['Pixel5']: {
+    userAgent:
+      'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36',
+    viewport: { width: 393, height: 851 },
+    deviceScaleFactor: 2.75,
+    isMobile: true,
+    hasTouch: true,
+    defaultBrowserType: 'chromium',
+  },
+};
+
+const playwrightPresets = {
   /**
    * Configuration for local development
    */
@@ -99,6 +122,29 @@ export const PlaywrightPresets = {
   },
 
   /**
+   * Configuration for mobile testing
+   */
+  mobile: {
+    use: {
+      baseURL: process.env['BASE_URL'] ?? 'http://localhost:3000',
+      trace: 'on-first-retry',
+      screenshot: 'only-on-failure',
+      video: 'retain-on-failure',
+      ...mobileDevices.iPhone12,
+    },
+    projects: [
+      {
+        name: 'Mobile Chrome',
+        use: { ...mobileDevices.Pixel5 },
+      },
+      {
+        name: 'Mobile Safari',
+        use: { ...mobileDevices.iPhone12 },
+      },
+    ],
+  },
+
+  /**
    * Configuration for accessibility tests
    */
   accessibility: {
@@ -110,13 +156,14 @@ export const PlaywrightPresets = {
     },
   },
 };
+export { playwrightPresets as PlaywrightPresets };
 
 /**
  * Global test setup helper
  */
 export async function globalSetup(): Promise<void> {
   // Setup tasks that run once before all tests
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   logger.info('Running global Playwright setup');
   process.env['PLAYWRIGHT_TEST_RUNNING'] = 'true';
 }
@@ -126,7 +173,7 @@ export async function globalSetup(): Promise<void> {
  */
 export async function globalTeardown(): Promise<void> {
   // Cleanup tasks that run once after all tests
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   logger.info('Running global Playwright teardown');
   delete process.env['PLAYWRIGHT_TEST_RUNNING'];
 }
@@ -152,7 +199,7 @@ export async function setupPageForTesting(page: Page): Promise<void> {
   });
 
   // Setup console message handler with context-aware logging
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   page.on('console', (message) => {
     const context = contextManager.getContext();
     const logData = {
@@ -181,8 +228,9 @@ export async function setupPageForTesting(page: Page): Promise<void> {
  */
 export async function setupContextForTesting(context: BrowserContext): Promise<void> {
   // Add any global headers
+  const headerTestEnvironment = 'X-Test-Environment';
   await context.setExtraHTTPHeaders({
-    'X-Test-Environment': 'true',
+    [headerTestEnvironment]: 'true',
   });
 
   // Setup network idle handling
@@ -200,7 +248,7 @@ export function setupEnvironmentVariables(): void {
   const logLevel = process.env['LOG_LEVEL'];
   process.env['LOG_LEVEL'] = logLevel ?? 'error';
 
-  const logger = getPlaywrightLogger();
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   logger.debug('Test environment variables configured', {
     nodeEnv: process.env['NODE_ENV'],
     logLevel: process.env['LOG_LEVEL'],

@@ -3,15 +3,34 @@
  * Integrates with @kitiumai/logger for structured logging
  */
 
-import { contextManager } from '@kitiumai/logger';
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { type Page, type Route } from '@playwright/test';
 
-import { getPlaywrightLogger } from '../internal/logger';
+const headerContentType = 'Content-Type';
+const headerTestLatency = 'X-Test-Latency';
+
+type GraphqlMockTools = {
+  addMocksToSchema: (options: { schema: unknown; mocks?: Record<string, unknown> }) => unknown;
+  makeExecutableSchema: (options: { typeDefs: string }) => unknown;
+};
+
+type GraphqlModule = {
+  graphql: (options: {
+    schema: unknown;
+    source: string;
+    variableValues?: Record<string, unknown>;
+  }) => Promise<unknown>;
+};
+
+type GraphqlRequestBody = {
+  query: string;
+  variables?: Record<string, unknown>;
+};
 
 export interface MockResponse {
   status?: number;
   headers?: Record<string, string>;
-  body: string | object;
+  body: string | Record<string, unknown> | ((requestBody: unknown) => Promise<unknown>);
 }
 
 /**
@@ -20,7 +39,7 @@ export interface MockResponse {
 export class NetworkMockManager {
   private readonly routes: Map<string, MockResponse> = new Map();
   private interceptedRequests: Array<{ url: string; method: string; body?: string }> = [];
-  private readonly logger = getPlaywrightLogger();
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   /**
    * Register a route mock
@@ -40,10 +59,10 @@ export class NetworkMockManager {
   /**
    * Mock GET request
    */
-  mockGet(urlPattern: string | RegExp, response: object | string): void {
+  mockGet(urlPattern: string | RegExp, response: Record<string, unknown> | string): void {
     const mockResponse: MockResponse = {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { [headerContentType]: 'application/json' },
       body: response,
     };
     this.registerRoute(urlPattern, mockResponse);
@@ -52,25 +71,57 @@ export class NetworkMockManager {
   /**
    * Mock POST request
    */
-  mockPost(urlPattern: string | RegExp, response: object | string): void {
+  mockPost(urlPattern: string | RegExp, response: Record<string, unknown> | string): void {
     const mockResponse: MockResponse = {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { [headerContentType]: 'application/json' },
       body: response,
     };
     this.registerRoute(urlPattern, mockResponse);
   }
 
   /**
-   * Mock error response
+   * Mock GraphQL endpoint
    */
-  mockError(urlPattern: string | RegExp, status: number, message: string): void {
-    const mockResponse: MockResponse = {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-      body: { error: message },
-    };
-    this.registerRoute(urlPattern, mockResponse);
+  mockGraphQL(urlPattern: string | RegExp, schema: string, mocks?: Record<string, unknown>): void {
+    const context = contextManager.getContext();
+    const key = typeof urlPattern === 'string' ? urlPattern : urlPattern.source;
+
+    this.routes.set(key, {
+      status: 200,
+      headers: { [headerContentType]: 'application/json' },
+      body: async (requestBody: unknown) => {
+        const parsed = requestBody as GraphqlRequestBody;
+        try {
+          const graphqlToolsModule = '@graphql-tools/mock';
+          const graphqlModule = 'graphql';
+          const tools = (await import(graphqlToolsModule)) as unknown as GraphqlMockTools;
+          const graphql = (await import(graphqlModule)) as unknown as GraphqlModule;
+
+          const executableSchema = tools.makeExecutableSchema({ typeDefs: schema });
+          const schemaWithMocks = tools.addMocksToSchema({
+            schema: executableSchema,
+            mocks: mocks ?? {},
+          });
+          const graphqlOptions: Parameters<GraphqlModule['graphql']>[0] = {
+            schema: schemaWithMocks,
+            source: parsed.query,
+          };
+          if (parsed.variables !== undefined) {
+            graphqlOptions.variableValues = parsed.variables;
+          }
+          return await graphql.graphql(graphqlOptions);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          return { errors: [{ message: `GraphQL mocking not available: ${message}` }] };
+        }
+      },
+    });
+
+    this.logger.debug('GraphQL mock registered', {
+      traceId: context.traceId,
+      urlPattern: key,
+    });
   }
 
   /**
@@ -102,8 +153,22 @@ export class NetworkMockManager {
     for (const [pattern, response] of this.routes) {
       const patternRegex = new RegExp(pattern);
       if (patternRegex.test(url)) {
-        const body =
-          typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
+        let responseBody: unknown = response.body;
+        if (typeof response.body === 'function') {
+          const requestBody = (() => {
+            const postData = request.postData();
+            if (!postData) {
+              return undefined;
+            }
+            try {
+              return JSON.parse(postData) as unknown;
+            } catch {
+              return postData;
+            }
+          })();
+          responseBody = await response.body(requestBody);
+        }
+        const body = typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody);
         const fulfillOptions: {
           status: number;
           headers?: Record<string, string>;
@@ -161,6 +226,18 @@ export class NetworkMockManager {
   clearMocks(): void {
     this.routes.clear();
     this.interceptedRequests = [];
+  }
+
+  /**
+   * Mock error response for a given URL pattern
+   */
+  mockError(urlPattern: string | RegExp, status: number, message: string): void {
+    const key = typeof urlPattern === 'string' ? urlPattern : urlPattern.source;
+    this.routes.set(key, {
+      status,
+      headers: { [headerContentType]: 'application/json' },
+      body: { error: message },
+    });
   }
 }
 
@@ -243,7 +320,7 @@ export async function abortRequests(page: Page, urlPattern: string | RegExp): Pr
 export async function slowDownNetwork(page: Page, latencyMs: number): Promise<void> {
   const context = page.context();
   await context.setExtraHTTPHeaders({
-    'X-Test-Latency': String(latencyMs),
+    [headerTestLatency]: String(latencyMs),
   });
 }
 
@@ -257,11 +334,15 @@ export class ApiMockBuilder {
     this.manager = createNetworkMockManager();
   }
 
-  mockEndpoint(_method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, response: object): this {
+  mockEndpoint(
+    _method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    path: string,
+    response: Record<string, unknown>
+  ): this {
     const pattern = new RegExp(path);
     const mockResponse: MockResponse = {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { [headerContentType]: 'application/json' },
       body: response,
     };
     this.manager.registerRoute(pattern, mockResponse);
@@ -269,7 +350,8 @@ export class ApiMockBuilder {
   }
 
   mockError(path: string, status: number, message: string): this {
-    this.manager.mockError(path, status, message);
+    const pattern = new RegExp(path);
+    this.manager.mockError(pattern, status, message);
     return this;
   }
 

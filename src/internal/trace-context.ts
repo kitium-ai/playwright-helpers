@@ -20,4 +20,3 @@ export function getTraceMeta(extra?: Record<string, unknown>): TraceMeta & Recor
     ...(extra ?? {}),
   };
 }
-

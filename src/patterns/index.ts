@@ -5,8 +5,7 @@
 
 import type { BrowserContext, Page } from '@playwright/test';
 
-import { toError } from '../internal/errors';
-import { createE2ETestData, createStorageHelper } from '../testing';
+import { createE2ETestData, createStorageHelper } from '@kitiumai/playwright-helpers/testing';
 
 /**
  * Test data setup and teardown helper
@@ -362,7 +361,7 @@ export class CommonPatterns {
       try {
         return await action();
       } catch (error) {
-        lastError = toError(error);
+        lastError = error instanceof Error ? error : new Error(String(error));
         onRetry?.(attempt, lastError);
 
         if (attempt < maxAttempts) {

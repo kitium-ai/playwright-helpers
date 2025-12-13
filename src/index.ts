@@ -6,6 +6,7 @@
 
 // Core modules
 export * from './accessibility';
+export * from './ai';
 export * from './assertions';
 export * from './auth';
 export * from './flows';

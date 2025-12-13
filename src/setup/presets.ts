@@ -67,7 +67,7 @@ export async function setupE2ETest(page: Page, options: E2ESetupOptions = {}): P
   if (baseUrl) {
     // Store in page context for later use
     await page.evaluate((url) => {
-      (window as unknown as { __BASE_URL__: string }).__BASE_URL__ = url;
+      (window as unknown as Record<'__BASE_URL__', string>)['__BASE_URL__'] = url;
     }, baseUrl);
   }
 
@@ -83,7 +83,7 @@ async function setupSPA(page: Page, options: { debug?: boolean }): Promise<void>
   // Wait for network idle by default for SPAs
   await page.addInitScript(() => {
     // Mark SPA environment
-    (window as unknown as { __APP_TYPE__: string }).__APP_TYPE__ = 'spa';
+    (window as unknown as Record<'__APP_TYPE__', string>)['__APP_TYPE__'] = 'spa';
   });
 
   // Intercept console errors
@@ -103,7 +103,7 @@ async function setupSPA(page: Page, options: { debug?: boolean }): Promise<void>
  */
 async function setupMPA(page: Page, options: { debug?: boolean }): Promise<void> {
   await page.addInitScript(() => {
-    (window as unknown as { __APP_TYPE__: string }).__APP_TYPE__ = 'mpa';
+    (window as unknown as Record<'__APP_TYPE__', string>)['__APP_TYPE__'] = 'mpa';
   });
 
   if (options.debug) {
@@ -119,7 +119,7 @@ async function setupPWA(page: Page, options: { debug?: boolean }): Promise<void>
   await page.context().grantPermissions(['notifications'], { origin: page.url() });
 
   await page.addInitScript(() => {
-    (window as unknown as { __APP_TYPE__: string }).__APP_TYPE__ = 'pwa';
+    (window as unknown as Record<'__APP_TYPE__', string>)['__APP_TYPE__'] = 'pwa';
   });
 
   if (options.debug) {
@@ -135,7 +135,7 @@ async function setupMobile(page: Page, options: { debug?: boolean }): Promise<vo
   await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE size
 
   await page.addInitScript(() => {
-    (window as unknown as { __APP_TYPE__: string }).__APP_TYPE__ = 'mobile';
+    (window as unknown as Record<'__APP_TYPE__', string>)['__APP_TYPE__'] = 'mobile';
   });
 
   if (options.debug) {
@@ -151,7 +151,7 @@ async function setupDesktop(page: Page, options: { debug?: boolean }): Promise<v
   await page.setViewportSize({ width: 1920, height: 1080 });
 
   await page.addInitScript(() => {
-    (window as unknown as { __APP_TYPE__: string }).__APP_TYPE__ = 'desktop';
+    (window as unknown as Record<'__APP_TYPE__', string>)['__APP_TYPE__'] = 'desktop';
   });
 
   if (options.debug) {
@@ -185,7 +185,7 @@ async function setupFeature(
     case 'a11y':
       // Setup accessibility checking
       await page.addInitScript(() => {
-        (window as unknown as { __A11Y_ENABLED__: boolean }).__A11Y_ENABLED__ = true;
+        (window as unknown as Record<'__A11Y_ENABLED__', boolean>)['__A11Y_ENABLED__'] = true;
       });
       if (options.debug) {
         console.log('  ✓ Accessibility checking enabled');
@@ -195,7 +195,7 @@ async function setupFeature(
     case 'performance':
       // Setup performance monitoring
       await page.addInitScript(() => {
-        (window as unknown as { __PERF_ENABLED__: boolean }).__PERF_ENABLED__ = true;
+        (window as unknown as Record<'__PERF_ENABLED__', boolean>)['__PERF_ENABLED__'] = true;
       });
       if (options.debug) {
         console.log('  ✓ Performance monitoring enabled');
@@ -221,7 +221,7 @@ async function setupFeature(
 /**
  * Playwright config presets
  */
-export const PlaywrightPresets = {
+const playwrightPresets = {
   /**
    * Development preset - fast feedback
    */
@@ -353,15 +353,16 @@ export const PlaywrightPresets = {
     ],
   } as PlaywrightTestConfig),
 };
+export { playwrightPresets as PlaywrightPresets };
 
 /**
  * Create custom preset by merging with base
  */
 export function createCustomPreset(
-  base: keyof typeof PlaywrightPresets,
+  base: keyof typeof playwrightPresets,
   overrides: Partial<PlaywrightTestConfig>
 ): PlaywrightTestConfig {
-  const baseConfig = PlaywrightPresets[base];
+  const baseConfig = playwrightPresets[base];
   return defineConfig({
     ...baseConfig,
     ...overrides,

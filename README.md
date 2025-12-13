@@ -17,21 +17,24 @@ npm install @kitiumai/playwright-helpers
 
 - 📄 **Page Object Model** - Comprehensive POM framework
 - ✅ **Custom Assertions** - Fluent assertion API
-- 🌐 **Network Mocking** - Request interception and mocking
+- 🌐 **Network Mocking** - Request interception and mocking, including GraphQL
 - 🔐 **Authentication** - Login/logout flow helpers
-- ♿ **Accessibility** - A11y testing utilities
-- 🎨 **Visual Testing** - Screenshot and visual regression
-- ⚡ **Performance & Reporting** - Core Web Vitals monitoring plus HTML analytics
+- ♿ **Accessibility** - A11y testing utilities with axe-core integration
+- 🎨 **Visual Testing** - Screenshot and visual regression with pixelmatch
+- ⚡ **Performance & Reporting** - Core Web Vitals monitoring plus Lighthouse integration
 - 🔄 **Test Flows** - Reusable user flow patterns
 - 🧩 **Test Patterns** - Common test patterns and utilities
-- ⚙️ **Setup & Config** - Playwright presets, global hooks, `generatePlaywrightConfig()`
-- 🛡️ **Resilience & Chaos** - Circuit breakers, timeouts, retries, and chaos injectors
-- 🔍 **Tracing & Observability** - Trace propagation, child spans, and console capture
+- ⚙️ **Setup & Config** - Playwright presets, global hooks, mobile testing support
+- 🛡️ **Resilience & Chaos** - Circuit breakers, timeouts, retries, and enhanced chaos injectors
+- 🔍 **Tracing & Observability** - Trace propagation, child spans, OpenTelemetry exporters
 - 🧪 **Fixture Kit & CLI Scaffolder** - Typed `test.extend` fixtures plus a `scaffoldPlaywrightAsset` helper
 - ♿ **Semantic Selectors** - `strictLocator` enforces data-testid/ARIA-first queries
-- 📜 **Contract-backed Mocks** - Mock routes while validating against OpenAPI contracts
+- 📜 **Contract-backed Mocks** - Mock routes while validating against OpenAPI and JSON Schema
 - 📡 **Trace Exporters** - Ship spans to OTLP collectors and stitch artifacts with trace IDs
 - 🧭 **Quality Scorecard** - `verify:test-quality` gate for accessibility, flake rate, and retry budgets
+- 🤖 **AI Test Generation** - Generate test scenarios from user stories
+- 🔒 **Security Testing** - OWASP checks and ZAP integration
+- 📊 **Allure Reporting** - Enhanced test reporting with attachments
 
 ## Quick Start
 
@@ -72,7 +75,13 @@ import { coreTest as test, scaffoldPlaywrightAsset } from '@kitiumai/playwright-
 // Scaffold an example spec
 await scaffoldPlaywrightAsset({ destination: 'tests/e2e', name: 'onboarding', kind: 'test' });
 
-test('dashboard renders with mocked profile', async ({ page, loginFlow, mockManager, artifactCollector, consoleLogs }) => {
+test('dashboard renders with mocked profile', async ({
+  page,
+  loginFlow,
+  mockManager,
+  artifactCollector,
+  consoleLogs,
+}) => {
   await mockManager.registerRoute('**/api/profile', { status: 200, body: { name: 'Ada' } });
   await loginFlow.login({ email: 'demo@example.com', password: 'secret' });
   await page.getByRole('heading', { name: /welcome/i }).waitFor();
@@ -269,9 +278,14 @@ await contracted.getNetworkManager().setupRouteInterception(page);
 Push captured spans to your OTLP collector and stitch artifacts with trace IDs:
 
 ```typescript
-import { exportTracesToCollector, stitchArtifactsWithTrace } from '@kitiumai/playwright-helpers/tracing';
+import {
+  exportTracesToCollector,
+  stitchArtifactsWithTrace,
+} from '@kitiumai/playwright-helpers/tracing';
 
-const response = await exportTracesToCollector({ collectorUrl: 'https://otel.example.com/v1/traces' });
+const response = await exportTracesToCollector({
+  collectorUrl: 'https://otel.example.com/v1/traces',
+});
 console.log('exported?', response.ok);
 
 const correlatedArtifacts = stitchArtifactsWithTrace('trace-id', ['test-results/example.png']);
@@ -805,7 +819,11 @@ Using granular imports reduces bundle size by only including what you use:
 
 ```typescript
 // ❌ Imports everything (larger bundle)
-import { ApplicationPage, AccessibilityChecker, PerformanceMonitor } from '@kitiumai/playwright-helpers';
+import {
+  ApplicationPage,
+  AccessibilityChecker,
+  PerformanceMonitor,
+} from '@kitiumai/playwright-helpers';
 
 // ✅ Imports only what's needed (optimal)
 import { ApplicationPage } from '@kitiumai/playwright-helpers/page-objects';

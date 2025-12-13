@@ -14,6 +14,7 @@ updated kitiumai packages with patch versions
 ## [v2.0.0] - 2025-11-28
 
 ### Added
+
 - Core fixture kit (`coreTest`) with console capture, trace-aware artifacts, and network mocking
 - CLI scaffolder utility (`scaffoldPlaywrightAsset`) for tests, pages, and flows
 - Semantic selector helpers (`strictLocator`, `warnOnNonSemantic`) for ARIA/data-testid-first queries
