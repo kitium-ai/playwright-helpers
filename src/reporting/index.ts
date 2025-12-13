@@ -7,7 +7,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 export interface TestExecution {
   testName: string;
@@ -64,7 +65,7 @@ export interface FlakyTestDetection {
  */
 export class TestExecutionRecorder {
   private readonly executions: Map<string, TestExecution[]> = new Map();
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
 
   /**
    * Record test execution
@@ -247,7 +248,7 @@ export * from './quality-scorecard';
  */
 export class HTMLReportGenerator {
   private readonly outputDir: string;
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
 
   constructor(outputDir = './test-results/reports') {
     this.outputDir = outputDir;

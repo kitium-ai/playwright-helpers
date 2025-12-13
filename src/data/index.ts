@@ -10,9 +10,10 @@ import {
   createBuilder,
   createFactory,
   type Factory,
-  getTestLogger,
 } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 // Re-export from test-core
 export type { Factory };
@@ -46,7 +47,7 @@ export async function fillFormWithTestData(
     suffix?: string;
   } = {}
 ): Promise<void> {
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   const context = contextManager.getContext();
   const { prefix = '', suffix = '' } = options;
 

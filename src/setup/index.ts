@@ -4,13 +4,15 @@
  */
 
 import { contextManager } from '@kitiumai/logger';
-import { getConfigManager, getTestLogger } from '@kitiumai/test-core';
+import { getConfigManager } from '@kitiumai/test-core';
 import {
   type BrowserContext,
   type Page,
   type PlaywrightTestConfig,
   test as base,
 } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 export interface TestFixtures {
   baseUrl: string;
@@ -114,7 +116,7 @@ export const PlaywrightPresets = {
  */
 export async function globalSetup(): Promise<void> {
   // Setup tasks that run once before all tests
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   logger.info('Running global Playwright setup');
   process.env['PLAYWRIGHT_TEST_RUNNING'] = 'true';
 }
@@ -124,7 +126,7 @@ export async function globalSetup(): Promise<void> {
  */
 export async function globalTeardown(): Promise<void> {
   // Cleanup tasks that run once after all tests
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   logger.info('Running global Playwright teardown');
   delete process.env['PLAYWRIGHT_TEST_RUNNING'];
 }
@@ -150,7 +152,7 @@ export async function setupPageForTesting(page: Page): Promise<void> {
   });
 
   // Setup console message handler with context-aware logging
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   page.on('console', (message) => {
     const context = contextManager.getContext();
     const logData = {
@@ -190,7 +192,7 @@ export async function setupContextForTesting(context: BrowserContext): Promise<v
 
 /**
  * Environment setup utilities
- * Uses @kitiumai/test-core/logger for structured logging
+ * Uses @kitiumai/logger for structured logging
  */
 export function setupEnvironmentVariables(): void {
   // Set test environment variables
@@ -198,9 +200,7 @@ export function setupEnvironmentVariables(): void {
   const logLevel = process.env['LOG_LEVEL'];
   process.env['LOG_LEVEL'] = logLevel ?? 'error';
 
-  // Logger is already configured via @kitiumai/test-core/logger
-  // No need to suppress console - logger handles this based on log level
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   logger.debug('Test environment variables configured', {
     nodeEnv: process.env['NODE_ENV'],
     logLevel: process.env['LOG_LEVEL'],

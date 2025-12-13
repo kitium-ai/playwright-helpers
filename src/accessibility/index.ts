@@ -1,11 +1,12 @@
 /**
  * Accessibility testing helpers for Playwright
- * Integrates with @kitiumai/test-core/logger for structured logging
+ * Integrates with @kitiumai/logger for structured logging
  */
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import type { Locator, Page } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 export interface A11yIssue {
   type: 'error' | 'warning' | 'info';
@@ -28,7 +29,7 @@ export interface A11yCheckResult {
  * Accessibility checker
  */
 export class AccessibilityChecker {
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
 
   /**
    * Check for missing alt text on images

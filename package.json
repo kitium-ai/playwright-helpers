@@ -199,18 +199,18 @@
     "release": "pnpm version && pnpm install --lockfile-only"
   },
   "dependencies": {
-    "@kitiumai/logger": "^2.0.1",
-    "@kitiumai/test-core": "^2.0.1"
+    "@kitiumai/logger": "^3.0.1",
+    "@kitiumai/test-core": "^3.0.0"
   },
   "peerDependencies": {
     "@playwright/test": "^1.44.0",
     "typescript": "^5.6.0"
   },
   "devDependencies": {
-    "@kitiumai/config": "^2.0.1",
-    "@kitiumai/lint": "^2.0.1",
-    "@kitiumai/scripts": "^1.0.0",
     "@changesets/cli": "^2.27.1",
+    "@kitiumai/config": "^3.1.4",
+    "@kitiumai/lint": "^3.0.0",
+    "@kitiumai/scripts": "^2.0.0",
     "@playwright/test": "^1.44.0",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
@@ -218,6 +218,7 @@
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "rimraf": "^5.0.5",
     "typescript": "^5.6.0"

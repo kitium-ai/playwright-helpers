@@ -1,14 +1,15 @@
 /**
  * Visual regression and screenshot helpers for Playwright
- * Integrates with @kitiumai/test-core/logger for structured logging
+ * Integrates with @kitiumai/logger for structured logging
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import type { Locator, Page } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 export interface ScreenshotOptions {
   fullPage?: boolean;
@@ -23,7 +24,7 @@ export interface ScreenshotOptions {
 export class VisualRegressionHelper {
   private readonly baselineDir: string;
   private readonly actualDir: string;
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
 
   constructor(baselineDir = 'visual-baselines', actualDir = 'visual-actual') {
     this.baselineDir = baselineDir;

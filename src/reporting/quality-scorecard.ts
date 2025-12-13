@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
+import { getPlaywrightLogger } from '../internal/logger';
 
 import type { TestExecution } from './index';
 
@@ -81,7 +81,7 @@ export async function runQualityGate(
   metricsPath = 'test-results/quality-metrics.json',
   thresholds: QualityThresholds = defaultThresholds
 ): Promise<void> {
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   const context = contextManager.getContext();
   const parsed: QualityMetrics = fs.existsSync(metricsPath)
     ? (JSON.parse(fs.readFileSync(metricsPath, 'utf-8')) as QualityMetrics)

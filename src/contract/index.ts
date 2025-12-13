@@ -4,9 +4,9 @@
  */
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
 
+import { getPlaywrightLogger } from '../internal/logger';
 import { createNetworkMockManager, type NetworkMockManager } from '../network';
 
 export interface ContractValidationResult {
@@ -49,7 +49,7 @@ export interface ContractedRouteOptions {
  * Contract validator for API testing
  */
 export class ContractValidator {
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
   private spec: OpenAPISpec | null = null;
 
   /**
@@ -340,7 +340,7 @@ export class ContractValidator {
 export class ContractMockManager {
   private readonly validator: ContractValidator;
   private readonly mockManager: NetworkMockManager;
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
 
   constructor(validator: ContractValidator, mockManager = createNetworkMockManager()) {
     this.validator = validator;
@@ -425,7 +425,7 @@ export async function setupContractValidation(
   await validator.loadSpec(specPathOrUrl);
 
   const context = contextManager.getContext();
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
 
   // Intercept API requests and validate
   await page.route('**/api/**', async (route) => {

@@ -1,11 +1,12 @@
 /**
  * Distributed tracing support for Playwright tests
- * Integrates with @kitiumai/test-core/logger for trace context propagation
+ * Integrates with @kitiumai/logger for trace context propagation
  */
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 export interface TraceSpan {
   name: string;
@@ -30,7 +31,7 @@ export interface TraceContext {
  * Trace manager for test operations
  */
 export class TraceManager {
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
   private readonly spans: Map<string, TraceSpan> = new Map();
   private currentSpanId: string | null = null;
 
@@ -39,7 +40,7 @@ export class TraceManager {
    */
   startSpan(name: string, attributes: Record<string, unknown> = {}, parentSpanId?: string): string {
     const context = contextManager.getContext();
-    const traceId = context.traceId ?? crypto.randomUUID();
+    const traceId = context.traceId;
     const spanId = crypto.randomUUID();
     const finalParentSpanId = parentSpanId ?? this.currentSpanId ?? undefined;
 
@@ -247,7 +248,7 @@ export async function extractTraceContextFromPage(page: Page): Promise<TraceCont
           spanId: context.spanId,
         },
         () => {
-          getTestLogger().debug('Extracted trace context from page', context);
+          getPlaywrightLogger().debug('Extracted trace context from page', context);
         }
       );
     }
@@ -289,7 +290,7 @@ export async function injectTraceContextIntoPage(page: Page, context: TraceConte
  * Setup automatic trace context propagation for a page
  */
 export async function setupTracePropagation(page: Page): Promise<void> {
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
 
   // Extract trace context on page load
   page.on('load', async () => {

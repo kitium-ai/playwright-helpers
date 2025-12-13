@@ -1,9 +1,9 @@
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import { type BrowserContext, type Page, test as base, type TestInfo } from '@playwright/test';
 
 import { AccessibilityChecker } from '../accessibility';
 import { LoginFlow } from '../flows';
+import { getPlaywrightLogger } from '../internal/logger';
 import { createNetworkMockManager, type NetworkMockManager } from '../network';
 import { getTraceManager } from '../tracing';
 
@@ -82,7 +82,7 @@ export const coreTest = base.extend<CoreFixtures>({
   },
   consoleLogs: async ({ page }, use) => {
     const logs: ConsoleLogCapture[] = [];
-    const logger = getTestLogger();
+    const logger = getPlaywrightLogger();
     page.on('console', (message) => {
       const context = contextManager.getContext();
       const entry: ConsoleLogCapture = {

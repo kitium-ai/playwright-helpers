@@ -1,11 +1,12 @@
 /**
  * Performance monitoring and measurement for Playwright tests
- * Integrates with @kitiumai/test-core/logger for structured logging
+ * Integrates with @kitiumai/logger for structured logging
  */
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 type PerformanceWithMemory = Performance & {
   memory?: {
@@ -48,7 +49,7 @@ export interface ResourceTiming {
 }
 
 export class PerformanceMonitor {
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
 
   /**
    * Get page load metrics

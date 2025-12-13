@@ -4,8 +4,9 @@
  */
 
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import type { Page, Response } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 export interface SecurityCheckResult {
   passed: boolean;
@@ -30,7 +31,7 @@ export interface SecurityWarning {
  * Security checker for Playwright tests
  */
 export class SecurityChecker {
-  private readonly logger = getTestLogger();
+  private readonly logger = getPlaywrightLogger();
 
   /**
    * Check for XSS vulnerabilities

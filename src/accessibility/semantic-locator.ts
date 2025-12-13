@@ -1,6 +1,7 @@
 import { contextManager } from '@kitiumai/logger';
-import { getTestLogger } from '@kitiumai/test-core';
 import type { Locator, Page } from '@playwright/test';
+
+import { getPlaywrightLogger } from '../internal/logger';
 
 export interface SemanticSelector {
   testId?: string;
@@ -20,7 +21,7 @@ export function strictLocator(
   selector: SemanticSelector | string,
   options: StrictLocatorOptions = {}
 ): Locator {
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   const context = contextManager.getContext();
   const normalized =
     typeof selector === 'string' ? ({ css: selector } satisfies SemanticSelector) : selector;
@@ -57,7 +58,7 @@ export function strictLocator(
 }
 
 export function warnOnNonSemantic(selector: string): void {
-  const logger = getTestLogger();
+  const logger = getPlaywrightLogger();
   const context = contextManager.getContext();
   if (selector.startsWith('#') || selector.startsWith('.') || selector.includes('>')) {
     logger.warn('Non-semantic selector detected; prefer data-testid or role queries', {

@@ -1,14 +1,10 @@
 {
   "extends": "@kitiumai/config/tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "moduleResolution": "bundler",
-    "types": ["node", "@playwright/test"]
+    "baseUrl": ".",
+    "outDir": "./dist"
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": [
+    "src"
+  ]
 }
