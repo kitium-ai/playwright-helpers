@@ -3,11 +3,12 @@
  * Integrates with @kitiumai/logger for structured logging and tracing
  */
 
-import { contextManager } from '@kitiumai/logger';
 import { type Locator, type Page } from '@playwright/test';
 
 import { strictLocator, warnOnNonSemantic } from '../accessibility/semantic-locator';
+import { toError } from '../internal/errors';
 import { getPlaywrightLogger } from '../internal/logger';
+import { getTraceMeta } from '../internal/trace-context';
 import { traceTest } from '../tracing';
 
 export interface PageObjectOptions {
@@ -41,26 +42,25 @@ export abstract class BasePage {
     path = '/',
     options?: { waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' }
   ): Promise<void> {
-    const context = contextManager.getContext();
     const url = this.baseUrl + path;
 
     return traceTest(
       'page.goto',
       async (spanId) => {
         this.logger.info('Navigating to page', {
-          traceId: context.traceId,
           spanId,
           url,
           path,
+          ...getTraceMeta(),
         });
 
         await this.page.goto(url, { waitUntil: options?.waitUntil ?? 'domcontentloaded' });
         await this.waitForReady();
 
         this.logger.debug('Page navigation completed', {
-          traceId: context.traceId,
           spanId,
           url: this.page.url(),
+          ...getTraceMeta(),
         });
       },
       { url, path, waitUntil: options?.waitUntil ?? 'domcontentloaded' }
@@ -151,16 +151,15 @@ export abstract class BasePage {
     selector: string | Locator,
     options?: { timeout?: number; force?: boolean }
   ): Promise<void> {
-    const context = contextManager.getContext();
     const selectorString = typeof selector === 'string' ? selector : '<Locator>';
 
     return traceTest(
       'page.click',
       async (spanId) => {
         this.logger.debug('Clicking element', {
-          traceId: context.traceId,
           spanId,
           selector: selectorString,
+          ...getTraceMeta(),
         });
 
         const locator = this.resolveLocator(selector);
@@ -176,21 +175,21 @@ export abstract class BasePage {
             await locator.click(clickOptions);
 
             this.logger.debug('Click successful', {
-              traceId: context.traceId,
               spanId,
               selector: selectorString,
               attempt,
+              ...getTraceMeta(),
             });
             return;
           } catch (_error) {
-            const error = _error instanceof Error ? _error : new Error(String(_error));
+            const error = toError(_error);
             lastError = error;
             this.logger.warn('Click attempt failed', {
-              traceId: context.traceId,
               spanId,
               selector: selectorString,
               attempt,
               error: error.message,
+              ...getTraceMeta(),
             });
 
             if (attempt < this.retryAttempts) {
@@ -218,17 +217,16 @@ export abstract class BasePage {
     text: string,
     options?: { delay?: number }
   ): Promise<void> {
-    const context = contextManager.getContext();
     const selectorString = typeof selector === 'string' ? selector : '<Locator>';
 
     return traceTest(
       'page.type',
       async (spanId) => {
         this.logger.debug('Typing into element', {
-          traceId: context.traceId,
           spanId,
           selector: selectorString,
           textLength: text.length,
+          ...getTraceMeta(),
         });
 
         const locator = this.resolveLocator(selector);
@@ -240,21 +238,21 @@ export abstract class BasePage {
             await locator.type(text, { delay: options?.delay ?? 0 });
 
             this.logger.debug('Type successful', {
-              traceId: context.traceId,
               spanId,
               selector: selectorString,
               attempt,
+              ...getTraceMeta(),
             });
             return;
           } catch (_error) {
-            const error = _error instanceof Error ? _error : new Error(String(_error));
+            const error = toError(_error);
             lastError = error;
             this.logger.warn('Type attempt failed', {
-              traceId: context.traceId,
               spanId,
               selector: selectorString,
               attempt,
               error: error.message,
+              ...getTraceMeta(),
             });
 
             if (attempt < this.retryAttempts) {

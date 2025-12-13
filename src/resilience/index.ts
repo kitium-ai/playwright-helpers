@@ -3,11 +3,12 @@
  * Circuit breaker, timeout management, and chaos testing utilities
  */
 
-import { contextManager } from '@kitiumai/logger';
 import { retry as retryCore, sleep } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
 
+import { toError } from '../internal/errors';
 import { getPlaywrightLogger } from '../internal/logger';
+import { getTraceMeta } from '../internal/trace-context';
 
 export interface CircuitBreakerOptions {
   threshold: number; // Number of failures before opening
@@ -42,11 +43,10 @@ export class CircuitBreaker {
     this.checkState();
 
     if (this.state === 'open') {
-      const context = contextManager.getContext();
       this.logger.warn('Circuit breaker is open, operation rejected', {
-        traceId: context.traceId,
         failureCount: this.failureCount,
         lastFailureTime: this.lastFailureTime,
+        ...getTraceMeta(),
       });
       throw new Error(
         `Circuit breaker is open. Too many failures (${this.failureCount}/${this.options.threshold})`
@@ -99,11 +99,10 @@ export class CircuitBreaker {
 
     if (this.failureCount >= this.options.threshold) {
       this.state = 'open';
-      const context = contextManager.getContext();
       this.logger.error('Circuit breaker opened due to failures', {
-        traceId: context.traceId,
         failureCount: this.failureCount,
         threshold: this.options.threshold,
+        ...getTraceMeta(),
       });
     }
   }
@@ -141,7 +140,6 @@ export class TimeoutManager {
     timeoutMs: number,
     onTimeout?: () => Promise<void>
   ): Promise<T> {
-    const context = contextManager.getContext();
     const startTime = Date.now();
 
     return Promise.race([
@@ -151,9 +149,9 @@ export class TimeoutManager {
           const handleTimeout = async (): Promise<void> => {
             const duration = Date.now() - startTime;
             this.logger.warn('Operation timed out', {
-              traceId: context.traceId,
               timeoutMs,
               duration,
+              ...getTraceMeta(),
             });
 
             if (onTimeout) {
@@ -191,7 +189,7 @@ export class TimeoutManager {
           }
         );
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = toError(error);
         if (attempt < timeouts.length - 1) {
           await sleep(1000 * (attempt + 1)); // Progressive delay
         }
@@ -217,10 +215,9 @@ export class ChaosInjector {
    * Simulate network failure
    */
   async simulateNetworkFailure(durationMs = 5000): Promise<void> {
-    const context = contextManager.getContext();
     this.logger.info('Injecting network failure', {
-      traceId: context.traceId,
       durationMs,
+      ...getTraceMeta(),
     });
 
     void this.page.route('**/*', (route) => {
@@ -237,10 +234,9 @@ export class ChaosInjector {
    * Simulate slow network
    */
   async simulateSlowNetwork(delayMs = 2000): Promise<void> {
-    const context = contextManager.getContext();
     this.logger.info('Injecting slow network', {
-      traceId: context.traceId,
       delayMs,
+      ...getTraceMeta(),
     });
 
     await this.page.route('**/*', async (route) => {
@@ -254,10 +250,9 @@ export class ChaosInjector {
    */
   async simulateRandomFailures(failureRate: number): Promise<void> {
     // failureRate: 0.0 to 1.0 (0% to 100%)
-    const context = contextManager.getContext();
     this.logger.info('Injecting random failures', {
-      traceId: context.traceId,
       failureRate,
+      ...getTraceMeta(),
     });
 
     void this.page.route('**/*', (route) => {
@@ -273,11 +268,10 @@ export class ChaosInjector {
    * Simulate server errors
    */
   async simulateServerErrors(statusCode = 500, durationMs = 5000): Promise<void> {
-    const context = contextManager.getContext();
     this.logger.info('Injecting server errors', {
-      traceId: context.traceId,
       statusCode,
       durationMs,
+      ...getTraceMeta(),
     });
 
     const startTime = Date.now();
@@ -332,11 +326,10 @@ export async function withResilience<T>(
   operation: () => Promise<T>
 ): Promise<T> {
   const logger = getPlaywrightLogger();
-  const context = contextManager.getContext();
 
   logger.debug('Executing operation with resilience patterns', {
-    traceId: context.traceId,
     options,
+    ...getTraceMeta(),
   });
 
   let wrappedOperation = operation;

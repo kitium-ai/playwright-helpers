@@ -5,6 +5,7 @@
 
 import type { BrowserContext, Page } from '@playwright/test';
 
+import { toError } from '../internal/errors';
 import { createE2ETestData, createStorageHelper } from '../testing';
 
 /**
@@ -361,7 +362,7 @@ export class CommonPatterns {
       try {
         return await action();
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = toError(error);
         onRetry?.(attempt, lastError);
 
         if (attempt < maxAttempts) {

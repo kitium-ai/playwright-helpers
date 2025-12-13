@@ -3,10 +3,11 @@
  * OpenAPI/Swagger validation and schema checking
  */
 
-import { contextManager } from '@kitiumai/logger';
 import type { Page } from '@playwright/test';
 
+import { toError } from '../internal/errors';
 import { getPlaywrightLogger } from '../internal/logger';
+import { getTraceMeta } from '../internal/trace-context';
 import { createNetworkMockManager, type NetworkMockManager } from '../network';
 
 export interface ContractValidationResult {
@@ -56,10 +57,9 @@ export class ContractValidator {
    * Load OpenAPI specification
    */
   async loadSpec(specPathOrUrl: string): Promise<void> {
-    const context = contextManager.getContext();
     this.logger.debug('Loading OpenAPI specification', {
-      traceId: context.traceId,
       specPath: specPathOrUrl,
+      ...getTraceMeta(),
     });
 
     try {
@@ -71,15 +71,15 @@ export class ContractValidator {
 
       this.spec = (await response.json()) as OpenAPISpec;
       this.logger.info('OpenAPI specification loaded', {
-        traceId: context.traceId,
         openapiVersion: this.spec.openapi ?? this.spec.swagger,
         pathCount: Object.keys(this.spec.paths ?? {}).length,
+        ...getTraceMeta(),
       });
     } catch (error) {
-      const error_ = error instanceof Error ? error : new Error(String(error));
+      const error_ = toError(error);
       this.logger.error('Failed to load OpenAPI specification', {
-        traceId: context.traceId,
         error: error_.message,
+        ...getTraceMeta(),
       });
       throw error_;
     }
@@ -94,7 +94,6 @@ export class ContractValidator {
     requestBody?: unknown,
     headers?: Record<string, string>
   ): Promise<ContractValidationResult> {
-    const context = contextManager.getContext();
     const violations: ContractViolation[] = [];
     const warnings: ContractWarning[] = [];
 
@@ -108,9 +107,9 @@ export class ContractValidator {
     }
 
     this.logger.debug('Validating request against contract', {
-      traceId: context.traceId,
       method,
       path,
+      ...getTraceMeta(),
     });
 
     // Find matching path in spec
@@ -206,7 +205,6 @@ export class ContractValidator {
     _responseBody?: unknown,
     _headers?: Record<string, string>
   ): Promise<ContractValidationResult> {
-    const context = contextManager.getContext();
     const violations: ContractViolation[] = [];
     const warnings: ContractWarning[] = [];
 
@@ -220,10 +218,10 @@ export class ContractValidator {
     }
 
     this.logger.debug('Validating response against contract', {
-      traceId: context.traceId,
       method,
       path,
       statusCode,
+      ...getTraceMeta(),
     });
 
     const specPath = this.findMatchingPath(path);
@@ -313,12 +311,11 @@ export class ContractValidator {
     responseStatus?: number,
     responseBody?: unknown
   ): Promise<ContractValidationResult> {
-    const context = contextManager.getContext();
     this.logger.info('Recording API request for contract validation', {
-      traceId: context.traceId,
       method,
       path,
       responseStatus,
+      ...getTraceMeta(),
     });
 
     const requestResult = await this.validateRequest(method, path, requestBody);
@@ -424,7 +421,6 @@ export async function setupContractValidation(
   const validator = new ContractValidator();
   await validator.loadSpec(specPathOrUrl);
 
-  const context = contextManager.getContext();
   const logger = getPlaywrightLogger();
 
   // Intercept API requests and validate
@@ -442,28 +438,29 @@ export async function setupContractValidation(
 
       if (!result.passed) {
         logger.warn('API contract violation detected', {
-          traceId: context.traceId,
           method,
           path,
           violations: result.violations,
+          ...getTraceMeta(),
         });
       }
 
       await route.continue();
     } catch (error) {
+      const error_ = toError(error);
       logger.error('Error validating API contract', {
-        traceId: context.traceId,
         method,
         path,
-        error: error instanceof Error ? error.message : String(error),
+        error: error_.message,
+        ...getTraceMeta(),
       });
       await route.continue();
     }
   });
 
   logger.info('API contract validation setup complete', {
-    traceId: context.traceId,
     specPath: specPathOrUrl,
+    ...getTraceMeta(),
   });
 
   return validator;

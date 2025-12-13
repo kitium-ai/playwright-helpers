@@ -6,6 +6,7 @@
 import { contextManager } from '@kitiumai/logger';
 import type { Page } from '@playwright/test';
 
+import { toError } from '../internal/errors';
 import { getPlaywrightLogger } from '../internal/logger';
 
 export interface TraceSpan {
@@ -190,9 +191,9 @@ export async function traceTest<T>(
     traceManager.endSpan(spanId, 'ok');
     return result;
   } catch (error) {
-    const error_ = error instanceof Error ? error : new Error(String(error));
-    traceManager.endSpan(spanId, 'error', error_);
-    throw error_;
+    const errorObject = toError(error);
+    traceManager.endSpan(spanId, 'error', errorObject);
+    throw errorObject;
   }
 }
 
@@ -213,9 +214,9 @@ export async function traceChild<T>(
     traceManager.endSpan(spanId, 'ok');
     return result;
   } catch (error) {
-    const error_ = error instanceof Error ? error : new Error(String(error));
-    traceManager.endSpan(spanId, 'error', error_);
-    throw error_;
+    const errorObject = toError(error);
+    traceManager.endSpan(spanId, 'error', errorObject);
+    throw errorObject;
   }
 }
 

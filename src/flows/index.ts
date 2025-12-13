@@ -7,6 +7,7 @@ import { getConfigManager } from '@kitiumai/test-core';
 import { expect, type Page } from '@playwright/test';
 
 import type { LoginCredentials } from '../auth';
+import { toError } from '../internal/errors';
 import { createFormHelper, createNavigationHelper } from '../testing';
 
 // Re-export LoginCredentials from auth for consistency
@@ -382,7 +383,7 @@ export class MultiStepOperation {
         await step.action();
         this.onStepComplete?.(step.name);
       } catch (error) {
-        const error_ = error instanceof Error ? error : new Error(String(error));
+        const error_ = toError(error);
         this.onError?.(step.name, error_);
         throw new Error(`Step '${step.name}' failed: ${error_.message}`);
       }

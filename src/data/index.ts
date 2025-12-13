@@ -4,7 +4,6 @@
  * Plus Playwright-specific utilities
  */
 
-import { contextManager } from '@kitiumai/logger';
 import {
   BuilderGenerators as Generators,
   createBuilder,
@@ -13,7 +12,9 @@ import {
 } from '@kitiumai/test-core';
 import type { Page } from '@playwright/test';
 
+import { toError } from '../internal/errors';
 import { getPlaywrightLogger } from '../internal/logger';
+import { getTraceMeta } from '../internal/trace-context';
 
 // Re-export from test-core
 export type { Factory };
@@ -48,12 +49,11 @@ export async function fillFormWithTestData(
   } = {}
 ): Promise<void> {
   const logger = getPlaywrightLogger();
-  const context = contextManager.getContext();
   const { prefix = '', suffix = '' } = options;
 
   logger.debug('Filling form with test data', {
-    traceId: context.traceId,
     fieldCount: Object.keys(formData).length,
+    ...getTraceMeta(),
   });
 
   for (const [field, value] of Object.entries(formData)) {
@@ -94,15 +94,16 @@ export async function fillFormWithTestData(
 
       if (!filled) {
         logger.warn(`Could not fill field: ${field}`, {
-          traceId: context.traceId,
           triedSelectors: selectors,
+          ...getTraceMeta(),
         });
       }
     } catch (error) {
+      const error_ = toError(error);
       logger.error(`Error filling field: ${field}`, {
-        traceId: context.traceId,
         field,
-        error: error instanceof Error ? error.message : String(error),
+        error: error_.message,
+        ...getTraceMeta(),
       });
     }
   }
