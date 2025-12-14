@@ -1,18 +1,19 @@
 import { contextManager, createLogger } from '@kitiumai/logger';
+
 import type { Locator, Page } from '@playwright/test';
 
-export interface SemanticSelector {
+export type SemanticSelector = {
   testId?: string;
   role?: string;
   name?: string | RegExp;
   css?: string;
   description?: string;
-}
+};
 
-export interface StrictLocatorOptions {
+export type StrictLocatorOptions = {
   warnOnCss?: boolean;
   requireSemantic?: boolean;
-}
+};
 
 export function strictLocator(
   page: Page,

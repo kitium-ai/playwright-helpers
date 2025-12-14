@@ -12,10 +12,10 @@ import {
   test as base,
 } from '@playwright/test';
 
-export interface TestFixtures {
+export type TestFixtures = {
   baseUrl: string;
   apiUrl: string;
-}
+};
 
 /**
  * Create Playwright test with custom fixtures

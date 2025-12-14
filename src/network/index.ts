@@ -27,11 +27,11 @@ type GraphqlRequestBody = {
   variables?: Record<string, unknown>;
 };
 
-export interface MockResponse {
+export type MockResponse = {
   status?: number;
   headers?: Record<string, string>;
   body: string | Record<string, unknown> | ((requestBody: unknown) => Promise<unknown>);
-}
+};
 
 /**
  * Network mock manager
@@ -156,14 +156,14 @@ export class NetworkMockManager {
         let responseBody: unknown = response.body;
         if (typeof response.body === 'function') {
           const requestBody = (() => {
-            const postData = request.postData();
-            if (!postData) {
-              return undefined;
+            const requestPostData = request.postData();
+            if (!requestPostData) {
+              return;
             }
             try {
-              return JSON.parse(postData) as unknown;
+              return JSON.parse(requestPostData) as unknown;
             } catch {
-              return postData;
+              return requestPostData;
             }
           })();
           responseBody = await response.body(requestBody);

@@ -4,6 +4,7 @@
  * Uses @kitiumai/test-core for configuration management
  */
 
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { getConfigManager } from '@kitiumai/test-core';
 import { defineConfig, devices, type Page, type PlaywrightTestConfig } from '@playwright/test';
 
@@ -16,23 +17,34 @@ export type TestFeature =
   | 'visual'
   | 'screenshots';
 
-export interface E2ESetupOptions {
+export type E2ESetupOptions = {
   preset?: AppType;
   features?: TestFeature[];
   baseUrl?: string;
   timeout?: number;
   debug?: boolean;
-}
+};
 
 /**
  * Setup page for E2E testing with automatic configuration
  */
 export async function setupE2ETest(page: Page, options: E2ESetupOptions = {}): Promise<void> {
-  const { preset = 'spa', features = [], baseUrl, timeout = 30000, debug = false } = options;
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
+  const {
+    preset = 'spa',
+    features = [],
+    baseUrl,
+    timeout = 30000,
+    debug: isDebug = false,
+  } = options;
 
-  if (debug) {
-    console.log(`🚀 Setting up E2E test for ${preset} app`);
-    console.log(`Features: ${features.join(', ') || 'none'}`);
+  if (isDebug) {
+    const context = contextManager.getContext();
+    logger.info('Setting up E2E test', {
+      traceId: context.traceId,
+      preset,
+      features: features.length > 0 ? features : undefined,
+    });
   }
 
   // Set timeout
@@ -42,25 +54,25 @@ export async function setupE2ETest(page: Page, options: E2ESetupOptions = {}): P
   // Setup based on preset
   switch (preset) {
     case 'spa':
-      await setupSPA(page, { debug });
+      await setupSPA(page, { debug: isDebug });
       break;
     case 'mpa':
-      await setupMPA(page, { debug });
+      await setupMPA(page, { debug: isDebug });
       break;
     case 'pwa':
-      await setupPWA(page, { debug });
+      await setupPWA(page, { debug: isDebug });
       break;
     case 'mobile':
-      await setupMobile(page, { debug });
+      await setupMobile(page, { debug: isDebug });
       break;
     case 'desktop':
-      await setupDesktop(page, { debug });
+      await setupDesktop(page, { debug: isDebug });
       break;
   }
 
   // Setup features
   for (const feature of features) {
-    await setupFeature(page, feature, { debug });
+    await setupFeature(page, feature, { debug: isDebug });
   }
 
   // Set base URL if provided
@@ -71,8 +83,9 @@ export async function setupE2ETest(page: Page, options: E2ESetupOptions = {}): P
     }, baseUrl);
   }
 
-  if (debug) {
-    console.log(`✅ E2E test setup complete`);
+  if (isDebug) {
+    const context = contextManager.getContext();
+    logger.info('E2E test setup complete', { traceId: context.traceId, preset });
   }
 }
 
@@ -80,6 +93,7 @@ export async function setupE2ETest(page: Page, options: E2ESetupOptions = {}): P
  * Setup for Single Page Applications
  */
 async function setupSPA(page: Page, options: { debug?: boolean }): Promise<void> {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   // Wait for network idle by default for SPAs
   await page.addInitScript(() => {
     // Mark SPA environment
@@ -89,12 +103,14 @@ async function setupSPA(page: Page, options: { debug?: boolean }): Promise<void>
   // Intercept console errors
   page.on('pageerror', (error) => {
     if (options.debug) {
-      console.error('❌ Page error:', error.message);
+      const context = contextManager.getContext();
+      logger.error('Page error', { traceId: context.traceId, error: error.message });
     }
   });
 
   if (options.debug) {
-    console.log('  ✓ SPA configuration applied');
+    const context = contextManager.getContext();
+    logger.info('SPA configuration applied', { traceId: context.traceId });
   }
 }
 
@@ -102,12 +118,14 @@ async function setupSPA(page: Page, options: { debug?: boolean }): Promise<void>
  * Setup for Multi-Page Applications
  */
 async function setupMPA(page: Page, options: { debug?: boolean }): Promise<void> {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   await page.addInitScript(() => {
     (window as unknown as Record<'__APP_TYPE__', string>)['__APP_TYPE__'] = 'mpa';
   });
 
   if (options.debug) {
-    console.log('  ✓ MPA configuration applied');
+    const context = contextManager.getContext();
+    logger.info('MPA configuration applied', { traceId: context.traceId });
   }
 }
 
@@ -115,6 +133,7 @@ async function setupMPA(page: Page, options: { debug?: boolean }): Promise<void>
  * Setup for Progressive Web Apps
  */
 async function setupPWA(page: Page, options: { debug?: boolean }): Promise<void> {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   // Grant permissions for PWA features
   await page.context().grantPermissions(['notifications'], { origin: page.url() });
 
@@ -123,7 +142,8 @@ async function setupPWA(page: Page, options: { debug?: boolean }): Promise<void>
   });
 
   if (options.debug) {
-    console.log('  ✓ PWA configuration applied (permissions granted)');
+    const context = contextManager.getContext();
+    logger.info('PWA configuration applied', { traceId: context.traceId });
   }
 }
 
@@ -131,6 +151,7 @@ async function setupPWA(page: Page, options: { debug?: boolean }): Promise<void>
  * Setup for Mobile testing
  */
 async function setupMobile(page: Page, options: { debug?: boolean }): Promise<void> {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   // Set viewport for mobile
   await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE size
 
@@ -139,7 +160,8 @@ async function setupMobile(page: Page, options: { debug?: boolean }): Promise<vo
   });
 
   if (options.debug) {
-    console.log('  ✓ Mobile configuration applied (viewport: 375x667)');
+    const context = contextManager.getContext();
+    logger.info('Mobile configuration applied', { traceId: context.traceId });
   }
 }
 
@@ -147,6 +169,7 @@ async function setupMobile(page: Page, options: { debug?: boolean }): Promise<vo
  * Setup for Desktop testing
  */
 async function setupDesktop(page: Page, options: { debug?: boolean }): Promise<void> {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   // Set viewport for desktop
   await page.setViewportSize({ width: 1920, height: 1080 });
 
@@ -155,7 +178,8 @@ async function setupDesktop(page: Page, options: { debug?: boolean }): Promise<v
   });
 
   if (options.debug) {
-    console.log('  ✓ Desktop configuration applied (viewport: 1920x1080)');
+    const context = contextManager.getContext();
+    logger.info('Desktop configuration applied', { traceId: context.traceId });
   }
 }
 
@@ -167,18 +191,21 @@ async function setupFeature(
   feature: TestFeature,
   options: { debug?: boolean }
 ): Promise<void> {
+  const logger = createLogger('development', { serviceName: 'playwright-helpers' });
   switch (feature) {
     case 'auth':
       // Setup auth helpers
       if (options.debug) {
-        console.log('  ✓ Auth helpers enabled');
+        const context = contextManager.getContext();
+        logger.info('Auth helpers enabled', { traceId: context.traceId });
       }
       break;
 
     case 'network-mock':
       // Setup network mocking
       if (options.debug) {
-        console.log('  ✓ Network mocking enabled');
+        const context = contextManager.getContext();
+        logger.info('Network mocking enabled', { traceId: context.traceId });
       }
       break;
 
@@ -188,7 +215,8 @@ async function setupFeature(
         (window as unknown as Record<'__A11Y_ENABLED__', boolean>)['__A11Y_ENABLED__'] = true;
       });
       if (options.debug) {
-        console.log('  ✓ Accessibility checking enabled');
+        const context = contextManager.getContext();
+        logger.info('Accessibility checking enabled', { traceId: context.traceId });
       }
       break;
 
@@ -198,21 +226,24 @@ async function setupFeature(
         (window as unknown as Record<'__PERF_ENABLED__', boolean>)['__PERF_ENABLED__'] = true;
       });
       if (options.debug) {
-        console.log('  ✓ Performance monitoring enabled');
+        const context = contextManager.getContext();
+        logger.info('Performance monitoring enabled', { traceId: context.traceId });
       }
       break;
 
     case 'visual':
       // Setup visual regression
       if (options.debug) {
-        console.log('  ✓ Visual regression enabled');
+        const context = contextManager.getContext();
+        logger.info('Visual regression enabled', { traceId: context.traceId });
       }
       break;
 
     case 'screenshots':
       // Auto-screenshot on actions
       if (options.debug) {
-        console.log('  ✓ Auto-screenshots enabled');
+        const context = contextManager.getContext();
+        logger.info('Auto-screenshots enabled', { traceId: context.traceId });
       }
       break;
   }

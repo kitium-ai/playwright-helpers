@@ -4,18 +4,20 @@
  * Uses @kitiumai/test-core for configuration management
  */
 
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { getConfigManager } from '@kitiumai/test-core';
 import { type Page } from '@playwright/test';
 
-import type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
 import { LoginFlow } from './index';
 
-export interface QuickAuthOptions {
+import type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
+
+export type QuickAuthOptions = {
   baseUrl?: string;
   checkA11y?: boolean;
   screenshot?: boolean;
   debug?: boolean;
-}
+};
 
 /**
  * Simplified authentication helper
@@ -24,6 +26,7 @@ export class QuickAuth {
   private readonly page: Page;
   private readonly loginFlow: LoginFlow;
   private readonly options: QuickAuthOptions;
+  private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
 
   constructor(page: Page, options: QuickAuthOptions = {}) {
     this.page = page;
@@ -54,39 +57,53 @@ export class QuickAuth {
     screenshot?: boolean;
     debug?: boolean;
   }): Promise<void> {
-    const { credentials, verify = true, checkA11y, screenshot, debug } = parameters;
+    const {
+      credentials,
+      verify: shouldVerify = true,
+      checkA11y: shouldCheckA11y,
+      screenshot: shouldScreenshot,
+      debug: isDebug,
+    } = parameters;
 
-    if (debug) {
-      console.log(`🔐 Logging in as: ${credentials.email ?? credentials.username}`);
+    if (isDebug) {
+      const context = contextManager.getContext();
+      this.logger.info('QuickAuth: logging in', {
+        traceId: context.traceId,
+        identifier: credentials.email ?? credentials.username,
+      });
     }
 
-    if (screenshot) {
+    if (shouldScreenshot) {
       await this.page.screenshot({
         path: `./test-results/screenshots/before-login-${Date.now()}.png`,
       });
     }
 
-    if (verify) {
+    if (shouldVerify) {
       await this.loginFlow.loginAndVerify(credentials);
     } else {
       await this.loginFlow.login(credentials);
     }
 
-    if (checkA11y) {
+    if (shouldCheckA11y) {
       // Import accessibility checker dynamically
       const { createAccessibilityChecker } = await import('../accessibility');
       const a11y = createAccessibilityChecker();
       await a11y.assertNoAccessibilityErrors(this.page);
     }
 
-    if (screenshot) {
+    if (shouldScreenshot) {
       await this.page.screenshot({
         path: `./test-results/screenshots/after-login-${Date.now()}.png`,
       });
     }
 
-    if (debug) {
-      console.log(`✅ Login successful - URL: ${this.page.url()}`);
+    if (isDebug) {
+      const context = contextManager.getContext();
+      this.logger.info('QuickAuth: login successful', {
+        traceId: context.traceId,
+        url: this.page.url(),
+      });
     }
   }
 
@@ -122,7 +139,8 @@ export class QuickAuth {
     await this.page.context().storageState({ path: statePath });
 
     if (this.options.debug) {
-      console.log(`💾 Auth state saved to: ${statePath}`);
+      const context = contextManager.getContext();
+      this.logger.info('QuickAuth: auth state saved', { traceId: context.traceId, statePath });
     }
   }
 
@@ -133,9 +151,11 @@ export class QuickAuth {
     // Note: This needs to be called before creating a page in the test
     // For now, we'll just provide a helpful message
     if (this.options.debug) {
-      console.log(
-        `ℹ️  To load auth state, use: { storageState: '${statePath}' } in test.use() or context creation`
-      );
+      const context = contextManager.getContext();
+      this.logger.info('QuickAuth: load auth state usage', {
+        traceId: context.traceId,
+        storageState: statePath,
+      });
     }
   }
 }

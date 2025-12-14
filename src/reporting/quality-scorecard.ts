@@ -4,20 +4,20 @@ import { contextManager, createLogger } from '@kitiumai/logger';
 
 import type { TestExecution } from './index';
 
-export interface QualityThresholds {
+export type QualityThresholds = {
   minimumAccessibilityCoverage: number;
   maximumAverageRetry: number;
   maximumFlakeRate: number;
   maximumDurationMs: number;
-}
+};
 
-export interface QualityMetrics {
+export type QualityMetrics = {
   accessibilityCoverage: number;
   averageRetries: number;
   flakeRate: number;
   averageDurationMs: number;
   executions: TestExecution[];
-}
+};
 
 const defaultThresholds: QualityThresholds = {
   minimumAccessibilityCoverage: 0.8,

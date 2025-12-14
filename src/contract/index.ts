@@ -3,14 +3,14 @@
  * OpenAPI/Swagger validation and schema checking
  */
 
-import ajv from 'ajv';
 import { contextManager, createLogger } from '@kitiumai/logger';
-import type { Page } from '@playwright/test';
-
 import {
   createNetworkMockManager,
   type NetworkMockManager,
 } from '@kitiumai/playwright-helpers/network';
+import ajv from 'ajv';
+
+import type { Page } from '@playwright/test';
 
 const headerContentType = 'Content-Type';
 const headerContractBacked = 'x-contract-backed';
@@ -19,42 +19,42 @@ const getTraceId = (): string => contextManager.getContext().traceId;
 const toError = (value: unknown): Error =>
   value instanceof Error ? value : new Error(String(value));
 
-export interface ContractValidationResult {
+export type ContractValidationResult = {
   passed: boolean;
   violations: ContractViolation[];
   warnings: ContractWarning[];
-}
+};
 
-export interface ContractViolation {
+export type ContractViolation = {
   type: 'request' | 'response' | 'schema';
   severity: 'error' | 'warning';
   message: string;
   details?: Record<string, unknown>;
-}
+};
 
-export interface ContractWarning {
+export type ContractWarning = {
   type: string;
   message: string;
   recommendation?: string;
-}
+};
 
-export interface OpenAPISpec {
+export type OpenAPISpec = {
   openapi?: string;
   swagger?: string;
   paths: Record<string, Record<string, unknown>>;
   components?: {
     schemas?: Record<string, unknown>;
   };
-}
+};
 
-export interface ContractedRouteOptions {
+export type ContractedRouteOptions = {
   method: string;
   path: string;
   status?: number;
   fixture?: unknown;
   schema?: Record<string, unknown>;
   jsonSchema?: Record<string, unknown>; // Add JSON Schema support
-}
+};
 
 /**
  * Contract validator for API testing
@@ -62,6 +62,135 @@ export interface ContractedRouteOptions {
 export class ContractValidator {
   private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
   private spec: OpenAPISpec | null = null;
+
+  private getMethodSpec(options: {
+    method: string;
+    path: string;
+  }):
+    | { kind: 'ok'; specPath: string; methodSpec: Record<string, unknown> }
+    | { kind: 'error'; result: ContractValidationResult } {
+    const violations: ContractViolation[] = [];
+    const warnings: ContractWarning[] = [];
+
+    if (!this.spec) {
+      violations.push({
+        type: 'request',
+        severity: 'error',
+        message: 'OpenAPI specification not loaded',
+      });
+      return { kind: 'error', result: { passed: false, violations, warnings } };
+    }
+
+    const specPath = this.findMatchingPath(options.path);
+    if (!specPath) {
+      violations.push({
+        type: 'request',
+        severity: 'error',
+        message: `Path not found in OpenAPI spec: ${options.path}`,
+        details: { method: options.method, path: options.path },
+      });
+      return { kind: 'error', result: { passed: false, violations, warnings } };
+    }
+
+    const pathSpec = this.spec.paths[specPath];
+    if (!pathSpec) {
+      violations.push({
+        type: 'request',
+        severity: 'error',
+        message: `Path specification not found: ${specPath}`,
+      });
+      return { kind: 'error', result: { passed: false, violations, warnings } };
+    }
+
+    const methodSpec = (pathSpec as Record<string, unknown>)[options.method.toLowerCase()] as
+      | Record<string, unknown>
+      | undefined;
+    if (!methodSpec) {
+      violations.push({
+        type: 'request',
+        severity: 'error',
+        message: `Method ${options.method} not allowed for path: ${options.path}`,
+        details: {
+          method: options.method,
+          path: options.path,
+          allowedMethods: Object.keys(pathSpec),
+        },
+      });
+      return { kind: 'error', result: { passed: false, violations, warnings } };
+    }
+
+    return { kind: 'ok', specPath, methodSpec };
+  }
+
+  private validateContentType(options: {
+    method: string;
+    path: string;
+    requestBody?: unknown;
+    headers?: Record<string, string>;
+    methodSpec: Record<string, unknown>;
+  }): ContractViolation[] {
+    if (!options.requestBody || !options.methodSpec['requestBody']) {
+      return [];
+    }
+
+    const bodySpec = (options.methodSpec['requestBody'] as { content?: Record<string, unknown> })
+      .content;
+    if (!bodySpec) {
+      return [];
+    }
+
+    const contentType = options.headers?.['content-type'] ?? 'application/json';
+    const contentSpec = bodySpec[contentType];
+    if (contentSpec) {
+      return [];
+    }
+
+    return [
+      {
+        type: 'request',
+        severity: 'error',
+        message: `Content-Type ${contentType} not supported for this endpoint`,
+        details: {
+          method: options.method,
+          path: options.path,
+          contentType,
+          supportedTypes: Object.keys(bodySpec),
+        },
+      },
+    ];
+  }
+
+  private validateRequiredHeaders(options: {
+    method: string;
+    path: string;
+    headers?: Record<string, string>;
+    methodSpec: Record<string, unknown>;
+  }): ContractViolation[] {
+    const requiredHeaders = (
+      options.methodSpec['parameters'] as
+        | Array<{ in: string; name: string; required?: boolean }>
+        | undefined
+    )
+      ?.filter((parameter) => parameter.in === 'header' && parameter.required)
+      .map((parameter) => parameter.name);
+
+    if (!requiredHeaders || requiredHeaders.length === 0) {
+      return [];
+    }
+
+    const missingHeaders: ContractViolation[] = [];
+    for (const header of requiredHeaders) {
+      if (!options.headers?.[header.toLowerCase()]) {
+        missingHeaders.push({
+          type: 'request',
+          severity: 'error',
+          message: `Required header missing: ${header}`,
+          details: { method: options.method, path: options.path, header },
+        });
+      }
+    }
+    return missingHeaders;
+  }
 
   /**
    * Load OpenAPI specification
@@ -107,9 +236,9 @@ export class ContractValidator {
 
     const validator = new ajv({ allErrors: true });
     const validate = validator.compile(schema);
-    const valid = validate(data);
+    const isValid = validate(data);
 
-    if (!valid && validate.errors) {
+    if (!isValid && validate.errors) {
       validate.errors.forEach((error) => {
         violations.push({
           type: 'schema',
@@ -139,96 +268,34 @@ export class ContractValidator {
     const violations: ContractViolation[] = [];
     const warnings: ContractWarning[] = [];
 
-    if (!this.spec) {
-      violations.push({
-        type: 'request',
-        severity: 'error',
-        message: 'OpenAPI specification not loaded',
-      });
-      return { passed: false, violations, warnings };
-    }
-
     this.logger.debug('Validating request against contract', {
       method,
       path,
       traceId: getTraceId(),
     });
 
-    // Find matching path in spec
-    const specPath = this.findMatchingPath(path);
-    if (!specPath) {
-      violations.push({
-        type: 'request',
-        severity: 'error',
-        message: `Path not found in OpenAPI spec: ${path}`,
-        details: { method, path },
-      });
-      return { passed: false, violations, warnings };
+    const methodSpecResult = this.getMethodSpec({ method, path });
+    if (methodSpecResult.kind === 'error') {
+      return methodSpecResult.result;
     }
 
-    const pathSpec = this.spec.paths[specPath];
-    if (!pathSpec) {
-      violations.push({
-        type: 'request',
-        severity: 'error',
-        message: `Path specification not found: ${specPath}`,
-      });
-      return { passed: false, violations, warnings };
-    }
-    const methodSpec = (pathSpec as Record<string, unknown>)[method.toLowerCase()] as
-      | Record<string, unknown>
-      | undefined;
-
-    if (!methodSpec) {
-      violations.push({
-        type: 'request',
-        severity: 'error',
-        message: `Method ${method} not allowed for path: ${path}`,
-        details: { method, path, allowedMethods: pathSpec ? Object.keys(pathSpec) : [] },
-      });
-      return { passed: false, violations, warnings };
-    }
-
-    // Validate request body schema if present
-    if (requestBody && methodSpec?.['requestBody']) {
-      const bodySpec = (methodSpec['requestBody'] as { content?: Record<string, unknown> }).content;
-      if (bodySpec) {
-        // Basic schema validation (simplified - in production, use ajv or similar)
-        const contentType = headers?.['content-type'] ?? 'application/json';
-        const contentSpec = bodySpec[contentType];
-
-        if (!contentSpec) {
-          violations.push({
-            type: 'request',
-            severity: 'error',
-            message: `Content-Type ${contentType} not supported for this endpoint`,
-            details: { method, path, contentType, supportedTypes: Object.keys(bodySpec) },
-          });
-        }
-      }
-    }
-
-    // Validate required headers
-    const requiredHeaders = (
-      methodSpec?.['parameters'] as
-        | Array<{ in: string; name: string; required?: boolean }>
-        | undefined
-    )
-      ?.filter((p) => p.in === 'header' && p.required)
-      .map((p) => p.name);
-
-    if (requiredHeaders && requiredHeaders.length > 0) {
-      for (const header of requiredHeaders) {
-        if (!headers?.[header.toLowerCase()]) {
-          violations.push({
-            type: 'request',
-            severity: 'error',
-            message: `Required header missing: ${header}`,
-            details: { method, path, header },
-          });
-        }
-      }
-    }
+    violations.push(
+      ...this.validateContentType({
+        method,
+        path,
+        requestBody,
+        ...(headers ? { headers } : {}),
+        methodSpec: methodSpecResult.methodSpec,
+      })
+    );
+    violations.push(
+      ...this.validateRequiredHeaders({
+        method,
+        path,
+        ...(headers ? { headers } : {}),
+        methodSpec: methodSpecResult.methodSpec,
+      })
+    );
 
     return {
       passed: violations.filter((v) => v.severity === 'error').length === 0,

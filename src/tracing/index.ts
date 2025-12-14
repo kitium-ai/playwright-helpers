@@ -4,6 +4,7 @@
  */
 
 import { contextManager, createLogger } from '@kitiumai/logger';
+
 import type { Page } from '@playwright/test';
 
 const toError = (value: unknown): Error =>
@@ -14,7 +15,7 @@ const attributeTestTraceId = 'test.traceId';
 const attributeTestSpanId = 'test.spanId';
 const headerContentType = 'Content-Type';
 
-export interface TraceSpan {
+export type TraceSpan = {
   name: string;
   startTime: number;
   endTime?: number;
@@ -25,13 +26,13 @@ export interface TraceSpan {
   attributes: Record<string, unknown>;
   status: 'ok' | 'error';
   error?: Error;
-}
+};
 
-export interface TraceContext {
+export type TraceContext = {
   traceId: string;
   spanId: string;
   parentSpanId?: string;
-}
+};
 
 /**
  * Trace manager for test operations
@@ -327,10 +328,10 @@ export async function setupTracePropagation(page: Page): Promise<void> {
   logger.debug('Trace propagation setup complete');
 }
 
-export interface TraceExportOptions {
+export type TraceExportOptions = {
   collectorUrl: string;
   serviceName?: string;
-}
+};
 
 /**
  * Export traces to Jaeger

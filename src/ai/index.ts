@@ -5,12 +5,12 @@
 
 import { contextManager, createLogger } from '@kitiumai/logger';
 
-export interface TestScenario {
+export type TestScenario = {
   name: string;
   description: string;
   steps: string[];
   expectedOutcome: string;
-}
+};
 
 /**
  * AI test generator
@@ -21,7 +21,7 @@ export class AITestGenerator {
   /**
    * Generate test scenarios from user story
    */
-  async generateScenarios(userStory: string): Promise<TestScenario[]> {
+  generateScenarios(userStory: string): Promise<TestScenario[]> {
     const context = contextManager.getContext();
     this.logger.debug('Generating test scenarios from user story', {
       traceId: context.traceId,
@@ -44,21 +44,21 @@ export class AITestGenerator {
       },
     ];
 
-    return scenarios;
+    return Promise.resolve(scenarios);
   }
 
   /**
    * Analyze test flakiness patterns
    */
-  async analyzeFlakiness(_testResults: unknown[]): Promise<{
+  analyzeFlakiness(_testResults: unknown[]): Promise<{
     flakyTests: unknown[];
     recommendations: string[];
   }> {
     // Mock analysis
-    return {
+    return Promise.resolve({
       flakyTests: [],
       recommendations: ['Add retry logic', 'Improve selectors'],
-    };
+    });
   }
 }
 

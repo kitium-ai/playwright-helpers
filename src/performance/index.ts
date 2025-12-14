@@ -3,8 +3,9 @@
  * Integrates with @kitiumai/logger for structured logging
  */
 
-import lighthouse, { type Flags } from 'lighthouse';
 import { contextManager, createLogger } from '@kitiumai/logger';
+import lighthouse, { type Flags } from 'lighthouse';
+
 import type { Page } from '@playwright/test';
 
 type PerformanceWithMemory = Performance & {
@@ -19,7 +20,7 @@ type LayoutShiftEntry = PerformanceEntry & {
   hadRecentInput: boolean;
 };
 
-export interface PerformanceMetrics {
+export type PerformanceMetrics = {
   navigationStart: number;
   domContentLoadedEventEnd: number;
   loadEventEnd: number;
@@ -30,22 +31,29 @@ export interface PerformanceMetrics {
   firstContentfulPaint?: number;
   largestContentfulPaint?: number;
   cumulativeLayoutShift?: number;
-}
+};
 
-export interface CoreWebVitals {
+export type CoreWebVitals = {
   lcp?: number; // Largest Contentful Paint
   fid?: number; // First Input Delay
   cls?: number; // Cumulative Layout Shift
   ttfb?: number; // Time to First Byte
-}
+};
 
-export interface ResourceTiming {
+export type ResourceTiming = {
   name: string;
   duration: number;
   transferSize: number;
   decodedBodySize: number;
   type: string;
-}
+};
+
+export type PerformanceReport = {
+  metrics: PerformanceMetrics | null;
+  vitals: CoreWebVitals | null;
+  resources: ResourceTiming[];
+  summary: string;
+};
 
 export class PerformanceMonitor {
   private readonly logger = createLogger('development', { serviceName: 'playwright-helpers' });
@@ -200,12 +208,17 @@ export class PerformanceMonitor {
     operation: () => Promise<T>,
     label?: string
   ): Promise<{ result: T; duration: number }> {
+    const context = contextManager.getContext();
     const startTime = performance.now();
     const result = await operation();
     const duration = performance.now() - startTime;
 
     if (label) {
-      console.log(`[${label}] Duration: ${duration.toFixed(2)}ms`);
+      this.logger.info('Operation duration measured', {
+        traceId: context.traceId,
+        label,
+        durationMs: Number(duration.toFixed(2)),
+      });
     }
 
     return { result, duration };
@@ -275,6 +288,7 @@ export class PerformanceMonitor {
    * Profile function execution
    */
   async profileFunction<T>(page: Page, function_: () => Promise<T>, label: string): Promise<T> {
+    const context = contextManager.getContext();
     const startMemory = await this.getMemoryUsage(page);
     const startTime = performance.now();
 
@@ -286,9 +300,13 @@ export class PerformanceMonitor {
     const memoryDelta =
       endMemory && startMemory ? endMemory.usedJSHeapSize - startMemory.usedJSHeapSize : null;
 
-    console.log(
-      `[${label}] Duration: ${duration.toFixed(2)}ms${memoryDelta ? `, Memory: ${(memoryDelta / 1024 / 1024).toFixed(2)}MB` : ''}`
-    );
+    this.logger.info('Function profiled', {
+      traceId: context.traceId,
+      label,
+      durationMs: Number(duration.toFixed(2)),
+      memoryDeltaMb:
+        memoryDelta !== null ? Number((memoryDelta / 1024 / 1024).toFixed(2)) : undefined,
+    });
 
     return result;
   }
@@ -324,12 +342,7 @@ export class PerformanceReportBuilder {
     return this;
   }
 
-  build(): {
-    metrics: PerformanceMetrics | null;
-    vitals: CoreWebVitals | null;
-    resources: ResourceTiming[];
-    summary: string;
-  } {
+  build(): PerformanceReport {
     const summary = this.generateSummary();
     return {
       metrics: this.metrics,

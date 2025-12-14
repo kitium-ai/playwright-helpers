@@ -1,6 +1,6 @@
 {
   "name": "@kitiumai/playwright-helpers",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Playwright E2E test helpers for enterprise testing",
   "type": "module",
   "main": "dist/index.js",

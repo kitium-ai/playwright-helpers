@@ -2,6 +2,56 @@
 
 Playwright E2E test helpers for enterprise testing. Provides comprehensive utilities for Page Object Model, custom assertions, network mocking, authentication, accessibility testing, visual regression, performance monitoring, and reusable test flows.
 
+## What is this package?
+
+`@kitiumai/playwright-helpers` is a comprehensive testing utility library designed specifically for Playwright end-to-end (E2E) testing. It provides enterprise-grade tools and patterns to streamline test development, improve test reliability, and enhance test observability. The package bridges the gap between basic Playwright functionality and production-ready testing infrastructure.
+
+## Why do we need this package?
+
+Modern web applications require robust, maintainable, and scalable testing strategies. While Playwright provides excellent browser automation capabilities, teams often need:
+
+- **Standardized testing patterns** across large codebases
+- **Enterprise observability** with tracing, logging, and reporting
+- **Resilience features** like circuit breakers and chaos engineering
+- **Security and accessibility compliance** checks
+- **Visual regression** and performance monitoring
+- **Contract testing** to ensure API compatibility
+- **AI-powered test generation** for faster test creation
+
+This package addresses these needs by providing battle-tested utilities that follow big-tech practices from companies like Google, Meta, and Netflix.
+
+## Competitor Comparison
+
+| Feature | @kitiumai/playwright-helpers | Playwright Test | TestCafe | Cypress | WebDriverIO |
+|---------|-----------------------------|-----------------|----------|---------|-------------|
+| **Page Object Model** | ✅ Advanced POM with registry | ❌ Basic support | ✅ Good POM | ✅ Built-in | ✅ Page objects |
+| **Network Mocking** | ✅ GraphQL + REST + Contract | ✅ Basic mocking | ✅ Request hooks | ❌ Limited | ✅ DevTools |
+| **Visual Regression** | ✅ pixelmatch + diffing | ❌ Manual screenshots | ❌ Basic | ❌ Limited | ✅ wdio-visual-regression |
+| **Performance Monitoring** | ✅ Lighthouse + Core Web Vitals | ❌ Manual | ❌ Basic | ❌ Limited | ❌ Limited |
+| **Accessibility Testing** | ✅ axe-core integration | ❌ Manual | ❌ Basic | ❌ Limited | ✅ axe-playwright |
+| **Tracing & Observability** | ✅ OpenTelemetry + Jaeger | ❌ Manual | ❌ Basic | ❌ Limited | ❌ Limited |
+| **Resilience Patterns** | ✅ Circuit breaker + Chaos | ❌ None | ❌ None | ❌ None | ❌ None |
+| **Contract Testing** | ✅ OpenAPI + JSON Schema | ❌ None | ❌ None | ❌ None | ❌ None |
+| **AI Test Generation** | ✅ Scenario generation | ❌ None | ❌ None | ❌ None | ❌ None |
+| **Security Testing** | ✅ OWASP ZAP integration | ❌ None | ❌ None | ❌ None | ❌ None |
+| **Mobile Testing** | ✅ Device presets | ✅ Basic | ✅ Good | ❌ Limited | ✅ Appium |
+| **Reporting** | ✅ Allure + HTML reports | ✅ Basic HTML | ✅ Good | ✅ Dashboard | ✅ Allure |
+| **Enterprise Features** | ✅ Full observability stack | ❌ Limited | ❌ Limited | ❌ Limited | ✅ Some |
+
+## Unique Selling Proposition (USP)
+
+**Enterprise-Grade Testing Infrastructure in a Single Package**
+
+- **Big-Tech Inspired**: Built following patterns from Google, Meta, and Netflix testing practices
+- **Full Observability Stack**: Integrated tracing, logging, and metrics from day one
+- **Resilience Engineering**: Circuit breakers, chaos injection, and fault tolerance
+- **AI-Enhanced**: Automated test scenario generation and flakiness analysis
+- **Contract-First Development**: API contract validation with OpenAPI and JSON Schema
+- **Security by Design**: Built-in OWASP compliance and vulnerability scanning
+- **Tree-Shakable**: Import only what you need for optimal bundle sizes
+- **TypeScript First**: Full type safety with comprehensive type definitions
+- **Monorepo Ready**: Designed for large-scale development with pnpm workspaces
+
 ## Installation
 
 ```bash
@@ -847,6 +897,271 @@ import { createBuilder, retry, waitFor, sleep } from '@kitiumai/test-core';
 // Logger integration (automatic trace context propagation)
 import { getTestLogger, contextManager } from '@kitiumai/test-core';
 ```
+
+## Complete API Reference
+
+This section lists all exported APIs from `@kitiumai/playwright-helpers`. For detailed documentation, see [API_REFERENCES.md](../../API_REFERENCES.md).
+
+### Accessibility
+- `AccessibilityChecker` (class)
+- `createAccessibilityChecker()` (function)
+- `A11yCheckResult` (type)
+- `A11yIssue` (type)
+- `strictLocator()` (function)
+- `warnOnNonSemantic()` (function)
+- `SemanticSelector` (type)
+- `StrictLocatorOptions` (type)
+- `assertHasRole()` (function)
+- `assertIsFocusable()` (function)
+- `tabToElement()` (function)
+
+### AI Test Generation
+- `AITestGenerator` (class)
+- `createAITestGenerator()` (function)
+- `TestScenario` (type)
+
+### Assertions
+- `AssertionBuilder` (class)
+- `createAssertion()` (function)
+- `assertConsoleMessages()` (function)
+- `assertElementCount()` (function)
+- `assertElementValue()` (function)
+- `assertHasAttribute()` (function)
+- `assertHasClass()` (function)
+- `assertIsChecked()` (function)
+- `assertIsDisabled()` (function)
+- `assertIsEnabled()` (function)
+- `assertIsHidden()` (function)
+- `assertIsNotChecked()` (function)
+- `assertIsVisible()` (function)
+- `assertNoConsoleErrors()` (function)
+- `assertPageTitle()` (function)
+- `assertResponseStatus()` (function)
+- `assertTextAppears()` (function)
+- `assertTextContent()` (function)
+- `assertTextNotAppears()` (function)
+- `assertUrlMatches()` (function)
+
+### Authentication
+- `AuthHelper` (class)
+- `SessionManager` (class)
+- `createAuthHelper()` (function)
+- `createSessionManager()` (function)
+- `AuthConfig` (type)
+- `AuthToken` (type)
+- `LoginCredentials` (type)
+- `AuthPresets` (object)
+
+### Contract Testing
+- `ContractValidator` (class)
+- `ContractMockManager` (class)
+- `setupContractBackedMocks()` (function)
+- `setupContractValidation()` (function)
+- `createContractValidator()` (function)
+- `ContractValidationResult` (type)
+- `ContractViolation` (type)
+- `ContractWarning` (type)
+- `ContractedRouteOptions` (type)
+- `OpenAPISpec` (type)
+
+### Data & Factories
+- `createTestDataBuilder` (alias for createBuilder)
+- `createTestDataFactory` (alias for createBuilder)
+- `createTestFactory` (alias for createFactory)
+- `Factory` (type)
+- `createBuilder()` (function)
+- `createFactory()` (function)
+- `Generators` (object)
+- `fillFormWithTestData()` (function)
+
+### Test Flows
+- `FormSubmissionFlow` (class)
+- `LoginFlow` (class)
+- `LogoutFlow` (class)
+- `MultiStepOperation` (class)
+- `NavigationFlow` (class)
+- `UserJourneyFlow` (class)
+- `createFormSubmissionFlow()` (function)
+- `createLoginFlow()` (function)
+- `createLogoutFlow()` (function)
+- `createMultiStepOperation()` (function)
+- `createNavigationFlow()` (function)
+- `createUserJourneyFlow()` (function)
+- `UserFlowOptions` (type)
+- `QuickAuth` (class)
+- `createQuickAuth()` (function)
+- `getGlobalAuth()` (function)
+- `QuickAuthOptions` (type)
+
+### Network Mocking
+- `NetworkMockManager` (class)
+- `ApiMockBuilder` (class)
+- `createNetworkMockManager()` (function)
+- `createApiMockBuilder()` (function)
+- `waitForRequest()` (function)
+- `waitForResponse()` (function)
+- `monitorNetworkActivity()` (function)
+- `abortRequests()` (function)
+- `slowDownNetwork()` (function)
+- `MockResponse` (type)
+
+### Page Objects
+- `BasePage` (class)
+- `ApplicationPage` (class)
+- `PageObjectRegistry` (class)
+- `createPageObject()` (function)
+- `createPageObjectRegistry()` (function)
+- `PageObjectOptions` (type)
+
+### Test Patterns
+- `TestDataManager` (class)
+- `ErrorScenarioHelper` (class)
+- `CommonPatterns` (class)
+- `createTestDataManager()` (function)
+- `createErrorScenarioHelper()` (function)
+- `createCommonPatterns()` (function)
+
+### Performance
+- `PerformanceMonitor` (class)
+- `PerformanceReportBuilder` (class)
+- `createPerformanceMonitor()` (function)
+- `createPerformanceReportBuilder()` (function)
+- `CoreWebVitals` (type)
+- `PerformanceMetrics` (type)
+- `PerformanceReport` (type)
+- `ResourceTiming` (type)
+
+### Reporting
+- `TestExecutionRecorder` (class)
+- `FlakyTestDetector` (class)
+- `TestAnalyticsGenerator` (class)
+- `HTMLReportGenerator` (class)
+- `createTestExecutionRecorder()` (function)
+- `createFlakyTestDetector()` (function)
+- `createAnalyticsGenerator()` (function)
+- `createHTMLReportGenerator()` (function)
+- `generateTestReport()` (function)
+- `TestExecution` (type)
+- `TestAnalytics` (type)
+- `FlakyTestDetection` (type)
+- `QualityMetrics` (type)
+- `QualityThresholds` (type)
+- `scoreQuality()` (function)
+- `summarizeExecutions()` (function)
+- `runQualityGate()` (function)
+
+### Resilience
+- `CircuitBreaker` (class)
+- `TimeoutManager` (class)
+- `ChaosInjector` (class)
+- `createCircuitBreaker()` (function)
+- `createTimeoutManager()` (function)
+- `createChaosInjector()` (function)
+- `withResilience()` (function)
+- `CircuitBreakerOptions` (type)
+- `CircuitBreakerState` (type)
+- `ResilienceOptions` (type)
+
+### Security
+- `SecurityChecker` (class)
+- `OWASPZAPIntegration` (class)
+- `createSecurityChecker()` (function)
+- `createOWASPZAPIntegration()` (function)
+- `securityCheck()` (function)
+- `SecurityCheckResult` (type)
+- `SecurityViolation` (type)
+- `SecurityWarning` (type)
+
+### Setup & Configuration
+- `createTest` (const)
+- `mobileDevices` (const)
+- `PlaywrightPresets` (object)
+- `generatePlaywrightConfig()` (function)
+- `globalSetup()` (function)
+- `globalTeardown()` (function)
+- `setupPageForTesting()` (function)
+- `setupContextForTesting()` (function)
+- `setupEnvironmentVariables()` (function)
+- `cleanupAfterTest()` (function)
+- `TestFixtures` (type)
+- `coreTest` (const)
+- `ArtifactCollector` (type)
+- `ConsoleLogCapture` (type)
+- `CoreFixtures` (type)
+- `CoreTest` (type)
+- `scaffoldFixtureUsage()` (function)
+- `setupE2ETest()` (function)
+- `createCustomPreset()` (function)
+- `AppType` (type)
+- `E2ESetupOptions` (type)
+- `TestFeature` (type)
+- `scaffoldPlaywrightAsset()` (function)
+- `ScaffoldKind` (type)
+- `ScaffoldOptions` (type)
+
+### Testing Utilities
+- `ConsoleHelper` (class)
+- `DialogHelper` (class)
+- `E2ETestData` (class)
+- `E2ETestHelper` (class)
+- `FormHelper` (class)
+- `NavigationHelper` (class)
+- `ScreenshotHelper` (class)
+- `StorageHelper` (class)
+- `TableHelper` (class)
+- `WaitHelper` (class)
+- `createConsoleHelper()` (function)
+- `createDialogHelper()` (function)
+- `createE2ETestData()` (function)
+- `createE2ETestHelper()` (function)
+- `createFormHelper()` (function)
+- `createNavigationHelper()` (function)
+- `createScreenshotHelper()` (function)
+- `createStorageHelper()` (function)
+- `createTableHelper()` (function)
+- `createWaitHelper()` (function)
+
+### Tracing
+- `TraceManager` (class)
+- `getTraceManager()` (function)
+- `traceTest()` (function)
+- `traceChild()` (function)
+- `extractTraceContextFromPage()` (function)
+- `injectTraceContextIntoPage()` (function)
+- `setupTracePropagation()` (function)
+- `exportTracesToCollector()` (function)
+- `stitchArtifactsWithTrace()` (function)
+- `TraceSpan` (type)
+- `TraceContext` (type)
+- `TraceExportOptions` (type)
+
+### Utils
+- `EnhancedPlaywrightError` (class)
+- `createError()` (function)
+- `ErrorMessages` (object)
+- `PlaywrightErrorMessages` (object)
+- `pollForValue()` (function)
+- `retryUntil()` (function)
+- `retryWithBackoffLegacy()` (function)
+- `RetryOptions` (type)
+- `retry` (function)
+- `sleep` (function)
+- `waitFor` (function)
+- `SelectorBuilder` (class)
+- `createSelectorBuilder()` (function)
+- `generateFormFieldSelectors()` (function)
+- `generateSelectorStrategies()` (function)
+
+### Visual Testing
+- `VisualRegressionHelper` (class)
+- `ScreenshotBuilder` (class)
+- `createVisualRegressionHelper()` (function)
+- `createScreenshotBuilder()` (function)
+- `assertInViewport()` (function)
+- `getComputedStyles()` (function)
+- `getPixelColor()` (function)
+- `measureElement()` (function)
+- `ScreenshotOptions` (type)
 
 ## TypeScript Support
 

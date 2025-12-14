@@ -4,30 +4,32 @@
  */
 
 import { contextManager, createLogger } from '@kitiumai/logger';
-import type { BrowserContext, Page } from '@playwright/test';
-
 import { traceTest } from '@kitiumai/playwright-helpers/tracing';
 
-export interface LoginCredentials {
+import type { BrowserContext, Page } from '@playwright/test';
+
+export type LoginCredentials = {
   email?: string;
   username?: string;
   password: string;
-}
+};
 
-export interface AuthToken {
+export type AuthToken = {
   accessToken: string;
   refreshToken?: string;
   expiresIn?: number;
-}
+};
 
-export interface AuthConfig {
+export type AuthConfig = {
   loginUrl: string;
   usernameSelector: string;
   passwordSelector: string;
   submitSelector: string;
   successIndicator?: string | RegExp;
   timeout?: number;
-}
+};
+
+const authSuccessIndicatorDefault = /dashboard|home/;
 
 /**
  * Authentication helper
@@ -47,7 +49,7 @@ export class AuthHelper {
   /**
    * Login with credentials
    */
-  async login(page: Page, credentials: LoginCredentials): Promise<void> {
+  login(page: Page, credentials: LoginCredentials): Promise<void> {
     const context = contextManager.getContext();
 
     return traceTest(
@@ -241,7 +243,7 @@ const authPresets = {
       usernameSelector: 'input[name="username"]',
       passwordSelector: 'input[name="password"]',
       submitSelector: 'button[type="submit"]',
-      successIndicator: /dashboard|home/,
+      successIndicator: authSuccessIndicatorDefault,
       timeout: 30000,
     };
   },
@@ -255,7 +257,7 @@ const authPresets = {
       usernameSelector: 'input[type="email"]',
       passwordSelector: 'input[type="password"]',
       submitSelector: 'button[type="submit"]',
-      successIndicator: /dashboard|home/,
+      successIndicator: authSuccessIndicatorDefault,
       timeout: 30000,
     };
   },
@@ -285,8 +287,9 @@ export class SessionManager {
   /**
    * Create authenticated session
    */
-  async createSession(context: BrowserContext, sessionId: string, token: AuthToken): Promise<void> {
+  createSession(context: BrowserContext, sessionId: string, token: AuthToken): Promise<void> {
     this.sessions.set(sessionId, { context, token });
+    return Promise.resolve();
   }
 
   /**

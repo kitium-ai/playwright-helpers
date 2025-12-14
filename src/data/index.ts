@@ -4,15 +4,15 @@
  * Plus Playwright-specific utilities
  */
 
+import { contextManager, createLogger } from '@kitiumai/logger';
 import {
   BuilderGenerators as Generators,
   createBuilder,
   createFactory,
   type Factory,
 } from '@kitiumai/test-core';
-import type { Page } from '@playwright/test';
 
-import { contextManager, createLogger } from '@kitiumai/logger';
+import type { Page } from '@playwright/test';
 
 // Re-export from test-core
 export type { Factory };
@@ -55,6 +55,29 @@ export async function fillFormWithTestData(
     traceId,
   });
 
+  const fillWithSelectors = async (selectors: string[], value: string): Promise<boolean> => {
+    for (const selector of selectors) {
+      try {
+        const locator = page.locator(selector).first();
+        const count = await locator.count();
+        if (count <= 0) {
+          continue;
+        }
+
+        const tagName = await locator.evaluate((element) => element.tagName.toLowerCase());
+        if (tagName === 'select') {
+          await locator.selectOption(value);
+        } else {
+          await locator.fill(value);
+        }
+        return true;
+      } catch {
+        continue;
+      }
+    }
+    return false;
+  };
+
   for (const [field, value] of Object.entries(formData)) {
     const selector = `${prefix}${field}${suffix}`;
     const stringValue = String(value);
@@ -70,28 +93,9 @@ export async function fillFormWithTestData(
         selector,
       ];
 
-      let filled = false;
-      for (const sel of selectors) {
-        try {
-          const locator = page.locator(sel).first();
-          const count = await locator.count();
+      const isFilled = await fillWithSelectors(selectors, stringValue);
 
-          if (count > 0) {
-            const tagName = await locator.evaluate((element) => element.tagName.toLowerCase());
-            if (tagName === 'select') {
-              await locator.selectOption(stringValue);
-            } else {
-              await locator.fill(stringValue);
-            }
-            filled = true;
-            break;
-          }
-        } catch {
-          continue;
-        }
-      }
-
-      if (!filled) {
+      if (!isFilled) {
         logger.warn(`Could not fill field: ${field}`, {
           triedSelectors: selectors,
           traceId,

@@ -14,7 +14,7 @@ type TestHelperWindow = Window &
 
 type FormFieldValue = string | boolean;
 
-interface StorageCookieOptions {
+type StorageCookieOptions = {
   url?: string;
   domain?: string;
   path?: string;
@@ -22,16 +22,16 @@ interface StorageCookieOptions {
   httpOnly?: boolean;
   secure?: boolean;
   sameSite?: 'Strict' | 'Lax' | 'None';
-}
+};
 
-interface ConsoleLogEntry {
+type ConsoleLogEntry = {
   type: string;
   text: string;
   args: string[];
   traceId?: string;
   requestId?: string;
   timestamp: number;
-}
+};
 
 /**
  * Test data helper for E2E tests

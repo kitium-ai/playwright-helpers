@@ -3,13 +3,13 @@
  * Custom HTML reports, analytics dashboard, and flaky test detection
  */
 
-import { allure } from 'allure-playwright';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { contextManager, createLogger } from '@kitiumai/logger';
+import { allure } from 'allure-playwright';
 
-export interface TestExecution {
+export type TestExecution = {
   testName: string;
   testPath: string;
   status: 'passed' | 'failed' | 'skipped' | 'flaky';
@@ -20,9 +20,9 @@ export interface TestExecution {
   screenshots?: string[];
   traceId?: string;
   metadata?: Record<string, unknown>;
-}
+};
 
-export interface TestAnalytics {
+export type TestAnalytics = {
   totalTests: number;
   passed: number;
   failed: number;
@@ -48,16 +48,16 @@ export interface TestAnalytics {
     failed: number;
     flaky: number;
   }>;
-}
+};
 
-export interface FlakyTestDetection {
+export type FlakyTestDetection = {
   testName: string;
   testPath: string;
   failureRate: number;
   lastFailures: number;
   lastPasses?: number;
   isFlaky?: boolean;
-}
+};
 
 /**
  * Test execution recorder
@@ -111,21 +111,21 @@ export class TestExecutionRecorder {
    */
   attachScreenshotToAllure(name: string, screenshotPath: string): void {
     const buffer = fs.readFileSync(screenshotPath);
-    allure.attachment(name, buffer, 'image/png');
+    void allure.attachment(name, buffer, 'image/png');
   }
 
   /**
    * Attach trace to Allure report
    */
   attachTraceToAllure(name: string, traceData: unknown): void {
-    allure.attachment(name, JSON.stringify(traceData, null, 2), 'application/json');
+    void allure.attachment(name, JSON.stringify(traceData, null, 2), 'application/json');
   }
 
   /**
    * Add step to Allure report
    */
   addStepToAllure(name: string): void {
-    allure.step(name, async () => {
+    void allure.step(name, async () => {
       // Step implementation placeholder
     });
   }
@@ -322,6 +322,89 @@ export class HTMLReportGenerator {
   ): string {
     const passRate = analytics.totalTests > 0 ? (analytics.passed / analytics.totalTests) * 100 : 0;
 
+    const flakyTestRows = analytics.flakyTests
+      .map(
+        (test) => `
+            <tr>
+              <td>${test.testName}</td>
+              <td>${test.testPath}</td>
+              <td>${(test.failureRate * 100).toFixed(1)}%</td>
+              <td>${test.lastFailures}</td>
+              <td>${test.lastPasses ?? 0}</td>
+            </tr>
+          `
+      )
+      .join('');
+
+    const flakyTestsSection =
+      analytics.flakyTests.length > 0
+        ? `
+    <div class="section">
+      <h2>Flaky Tests (${analytics.flakyTests.length})</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Test Name</th>
+            <th>Test Path</th>
+            <th>Failure Rate</th>
+            <th>Last Failures</th>
+            <th>Last Passes</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${flakyTestRows}
+        </tbody>
+      </table>
+    </div>
+    `
+        : '';
+
+    const slowTestRows = analytics.slowTests
+      .map(
+        (test) => `
+            <tr>
+              <td>${test.testName}</td>
+              <td>${test.testPath}</td>
+              <td>${(test.averageDuration / 1000).toFixed(2)}s</td>
+            </tr>
+          `
+      )
+      .join('');
+
+    const slowTestsSection =
+      analytics.slowTests.length > 0
+        ? `
+    <div class="section">
+      <h2>Slowest Tests (Top 10)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Test Name</th>
+            <th>Test Path</th>
+            <th>Average Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${slowTestRows}
+        </tbody>
+      </table>
+    </div>
+    `
+        : '';
+
+    const allExecutionsRows = executions
+      .map(
+        (execution) => `
+            <tr>
+              <td>${execution.testName}</td>
+              <td><span class="status-badge status-${execution.status}">${execution.status}</span></td>
+              <td>${(execution.duration / 1000).toFixed(2)}s</td>
+              <td>${execution.error ? `<pre style="max-width: 400px; overflow: auto;">${this.escapeHtml(execution.error)}</pre>` : '-'}</td>
+            </tr>
+          `
+      )
+      .join('');
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -378,73 +461,8 @@ export class HTMLReportGenerator {
       </div>
     </div>
 
-    ${
-      analytics.flakyTests.length > 0
-        ? `
-    <div class="section">
-      <h2>Flaky Tests (${analytics.flakyTests.length})</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Test Name</th>
-            <th>Test Path</th>
-            <th>Failure Rate</th>
-            <th>Last Failures</th>
-            <th>Last Passes</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${analytics.flakyTests
-            .map(
-              (test) => `
-            <tr>
-              <td>${test.testName}</td>
-              <td>${test.testPath}</td>
-              <td>${(test.failureRate * 100).toFixed(1)}%</td>
-              <td>${test.lastFailures}</td>
-              <td>${test.lastPasses ?? 0}</td>
-            </tr>
-          `
-            )
-            .join('')}
-        </tbody>
-      </table>
-    </div>
-    `
-        : ''
-    }
-
-    ${
-      analytics.slowTests.length > 0
-        ? `
-    <div class="section">
-      <h2>Slowest Tests (Top 10)</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Test Name</th>
-            <th>Test Path</th>
-            <th>Average Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${analytics.slowTests
-            .map(
-              (test) => `
-            <tr>
-              <td>${test.testName}</td>
-              <td>${test.testPath}</td>
-              <td>${(test.averageDuration / 1000).toFixed(2)}s</td>
-            </tr>
-          `
-            )
-            .join('')}
-        </tbody>
-      </table>
-    </div>
-    `
-        : ''
-    }
+    ${flakyTestsSection}
+    ${slowTestsSection}
 
     <div class="section">
       <h2>All Test Executions</h2>
@@ -458,18 +476,7 @@ export class HTMLReportGenerator {
           </tr>
         </thead>
         <tbody>
-          ${executions
-            .map(
-              (exec) => `
-            <tr>
-              <td>${exec.testName}</td>
-              <td><span class="status-badge status-${exec.status}">${exec.status}</span></td>
-              <td>${(exec.duration / 1000).toFixed(2)}s</td>
-              <td>${exec.error ? `<pre style="max-width: 400px; overflow: auto;">${this.escapeHtml(exec.error)}</pre>` : '-'}</td>
-            </tr>
-          `
-            )
-            .join('')}
+          ${allExecutionsRows}
         </tbody>
       </table>
     </div>

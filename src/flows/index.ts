@@ -3,11 +3,12 @@
  * Provides common user flows and multi-step operations
  */
 
+import { contextManager, createLogger } from '@kitiumai/logger';
+import { createFormHelper, createNavigationHelper } from '@kitiumai/playwright-helpers/testing';
 import { getConfigManager } from '@kitiumai/test-core';
 import { expect, type Page } from '@playwright/test';
 
 import type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
-import { createFormHelper, createNavigationHelper } from '@kitiumai/playwright-helpers/testing';
 
 // Re-export LoginCredentials from auth for consistency
 export type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
@@ -15,10 +16,10 @@ export type { LoginCredentials } from '@kitiumai/playwright-helpers/auth';
 const toError = (value: unknown): Error =>
   value instanceof Error ? value : new Error(String(value));
 
-export interface UserFlowOptions {
+export type UserFlowOptions = {
   baseUrl?: string;
   timeout?: number;
-}
+};
 
 /**
  * Login flow helper
@@ -197,7 +198,7 @@ export class FormSubmissionFlow {
   ): Promise<void> {
     const {
       submitSelector = 'button[type="submit"]',
-      waitForNavigation = true,
+      waitForNavigation: shouldWaitForNavigation = true,
       waitForUrl,
     } = options;
 
@@ -205,7 +206,7 @@ export class FormSubmissionFlow {
     await this.formHelper.fillFields(formData);
 
     // Submit form
-    if (waitForNavigation) {
+    if (shouldWaitForNavigation) {
       await Promise.all([
         waitForUrl
           ? this.page.waitForURL(waitForUrl, { timeout: 10000 })
@@ -398,6 +399,7 @@ export class MultiStepOperation {
   async executeWithRollback(
     rollbackActions: Array<{ name: string; action: () => Promise<void> }>
   ): Promise<void> {
+    const logger = createLogger('development', { serviceName: 'playwright-helpers' });
     const executedSteps: string[] = [];
 
     try {
@@ -414,7 +416,12 @@ export class MultiStepOperation {
           try {
             await rollback.action();
           } catch (rollbackError) {
-            console.error(`Rollback for step '${executedSteps[index]}' failed:`, rollbackError);
+            const context = contextManager.getContext();
+            logger.error('Rollback failed', {
+              traceId: context.traceId,
+              step: executedSteps[index],
+              error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+            });
           }
         }
       }

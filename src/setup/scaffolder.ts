@@ -5,11 +5,11 @@ import { scaffoldFixtureUsage } from './fixtures';
 
 export type ScaffoldKind = 'test' | 'page' | 'flow';
 
-export interface ScaffoldOptions {
+export type ScaffoldOptions = {
   destination: string;
   name: string;
   kind: ScaffoldKind;
-}
+};
 
 const templates: Record<ScaffoldKind, (name: string) => Promise<string> | string> = {
   test: async () => scaffoldFixtureUsage(),

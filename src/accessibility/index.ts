@@ -3,18 +3,19 @@
  * Integrates with @kitiumai/logger for structured logging
  */
 
-import { injectAxe } from 'axe-playwright';
 import { contextManager, createLogger } from '@kitiumai/logger';
+import { injectAxe } from 'axe-playwright';
+
 import type { Locator, Page } from '@playwright/test';
 
-export interface A11yIssue {
+export type A11yIssue = {
   type: 'error' | 'warning' | 'info';
   message: string;
   element?: string;
   code?: string;
-}
+};
 
-export interface A11yCheckResult {
+export type A11yCheckResult = {
   passes: boolean;
   issues: A11yIssue[];
   stats: {
@@ -22,7 +23,7 @@ export interface A11yCheckResult {
     warnings: number;
     info: number;
   };
-}
+};
 
 /**
  * Accessibility checker
@@ -260,11 +261,11 @@ export class AccessibilityChecker {
     await injectAxe(page);
 
     // Use axe.run via the page context to obtain results
-    const axeResults = await page.evaluate(async (opts) => {
+    const axeResults = await page.evaluate(async (options_) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const axeAny: any = (window as any).axe;
       const results = await axeAny.run(document, {
-        runOnly: opts?.includedImpacts ? { values: opts.includedImpacts } : undefined,
+        runOnly: options_?.includedImpacts ? { values: options_.includedImpacts } : undefined,
       });
       return results;
     }, options);

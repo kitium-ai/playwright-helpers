@@ -4,9 +4,8 @@
  */
 
 import { contextManager, createLogger } from '@kitiumai/logger';
-import { type Locator, type Page } from '@playwright/test';
-
 import { traceTest } from '@kitiumai/playwright-helpers/tracing';
+import { type Locator, type Page } from '@playwright/test';
 
 type SemanticSelector = {
   testId?: string;
@@ -77,10 +76,10 @@ const warnOnNonSemantic = (selector: string): void => {
   }
 };
 
-export interface PageObjectOptions {
+export type PageObjectOptions = {
   baseUrl?: string;
   waitTimeout?: number;
-}
+};
 
 /**
  * Base page object class with enhanced capabilities

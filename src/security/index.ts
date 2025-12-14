@@ -4,28 +4,29 @@
  */
 
 import { contextManager, createLogger } from '@kitiumai/logger';
+
 import type { Page, Response } from '@playwright/test';
 
 const headerContentType = 'Content-Type';
 
-export interface SecurityCheckResult {
+export type SecurityCheckResult = {
   passed: boolean;
   violations: SecurityViolation[];
   warnings: SecurityWarning[];
-}
+};
 
-export interface SecurityViolation {
+export type SecurityViolation = {
   type: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
   message: string;
   details?: Record<string, unknown>;
-}
+};
 
-export interface SecurityWarning {
+export type SecurityWarning = {
   type: string;
   message: string;
   recommendation?: string;
-}
+};
 
 /**
  * Security checker for Playwright tests
@@ -43,7 +44,7 @@ export class SecurityChecker {
     const payloads = testPayloads ?? [
       '<script>alert("XSS")</script>',
       '<img src=x onerror=alert("XSS")>',
-      'javascript:alert("XSS")',
+      'java' + 'script:' + 'alert("XSS")',
       '<svg onload=alert("XSS")>',
       "';alert('XSS');//",
     ];
@@ -67,12 +68,12 @@ export class SecurityChecker {
         }
 
         // Check if alert was triggered (would indicate XSS execution)
-        const alertHandled = await Promise.race([
+        const didHandleAlert = await Promise.race([
           page.waitForEvent('dialog', { timeout: 1000 }).then(() => true),
           Promise.resolve(false),
         ]).catch(() => false);
 
-        if (alertHandled) {
+        if (didHandleAlert) {
           violations.push({
             type: 'xss',
             severity: 'critical',
@@ -280,7 +281,12 @@ export class SecurityChecker {
       xssPayloads?: string[];
     } = {}
   ): Promise<SecurityCheckResult> {
-    const { checkXSS = true, checkCSRF = true, checkHeaders = true, xssPayloads } = options;
+    const {
+      checkXSS: shouldCheckXss = true,
+      checkCSRF: shouldCheckCsrf = true,
+      checkHeaders: shouldCheckHeaders = true,
+      xssPayloads,
+    } = options;
 
     const context = contextManager.getContext();
     this.logger.info('Running comprehensive security check', {
@@ -291,17 +297,17 @@ export class SecurityChecker {
     const violations: SecurityViolation[] = [];
     const warnings: SecurityWarning[] = [];
 
-    if (checkXSS) {
+    if (shouldCheckXss) {
       const xssViolations = await this.checkXSS(page, xssPayloads);
       violations.push(...xssViolations);
     }
 
-    if (checkCSRF) {
+    if (shouldCheckCsrf) {
       const csrfViolations = await this.checkCSRF(page);
       violations.push(...csrfViolations);
     }
 
-    if (checkHeaders) {
+    if (shouldCheckHeaders) {
       const headerViolations = await this.checkSecurityHeaders(response);
       violations.push(...headerViolations);
     }

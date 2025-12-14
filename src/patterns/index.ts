@@ -3,9 +3,10 @@
  * Provides reusable patterns for test data, error scenarios, and common operations
  */
 
-import type { BrowserContext, Page } from '@playwright/test';
-
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { createE2ETestData, createStorageHelper } from '@kitiumai/playwright-helpers/testing';
+
+import type { BrowserContext, Page } from '@playwright/test';
 
 /**
  * Test data setup and teardown helper
@@ -105,6 +106,7 @@ export class TestDataManager {
    * Cleanup all test data
    */
   async cleanup(): Promise<void> {
+    const logger = createLogger('development', { serviceName: 'playwright-helpers' });
     // Execute cleanup actions in reverse order
     for (let index = this.cleanupActions.length - 1; index >= 0; index--) {
       const action = this.cleanupActions[index];
@@ -112,7 +114,11 @@ export class TestDataManager {
         try {
           await action();
         } catch (error) {
-          console.error('Cleanup action failed:', error);
+          const context = contextManager.getContext();
+          logger.warn('Cleanup action failed', {
+            traceId: context.traceId,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       }
     }
@@ -183,8 +189,9 @@ export class ErrorScenarioHelper {
             );
           }
         } else {
-          const matchesPattern = !!errorText && expectedError.test(errorText);
-          if (!matchesPattern) {
+          const errorTextValue = errorText ?? '';
+          const isPatternMatch = errorTextValue !== '' && expectedError.test(errorTextValue);
+          if (!isPatternMatch) {
             throw new Error(
               `Expected error for '${field}' to match ${expectedError}, but got '${errorText}'`
             );
@@ -250,9 +257,9 @@ export class ErrorScenarioHelper {
       simulateOffline?: boolean;
     } = {}
   ): Promise<void> {
-    const { simulateOffline = false } = options;
+    const { simulateOffline: shouldSimulateOffline = false } = options;
 
-    if (simulateOffline) {
+    if (shouldSimulateOffline) {
       await this.page.context().setOffline(true);
     }
 
@@ -274,7 +281,7 @@ export class ErrorScenarioHelper {
         }
       }
     } finally {
-      if (simulateOffline) {
+      if (shouldSimulateOffline) {
         await this.page.context().setOffline(false);
       }
     }
@@ -330,9 +337,13 @@ export class CommonPatterns {
       timeout?: number;
     } = {}
   ): Promise<void> {
-    const { waitForNetworkIdle = true, waitForSelector, timeout = 30000 } = options;
+    const {
+      waitForNetworkIdle: shouldWaitForNetworkIdle = true,
+      waitForSelector,
+      timeout = 30000,
+    } = options;
 
-    if (waitForNetworkIdle) {
+    if (shouldWaitForNetworkIdle) {
       await this.page.waitForLoadState('networkidle', { timeout });
     } else {
       await this.page.waitForLoadState('domcontentloaded', { timeout });
@@ -396,9 +407,9 @@ export class CommonPatterns {
       timeout?: number;
     } = {}
   ): Promise<void> {
-    const { allVisible = true, timeout = 5000 } = options;
+    const { allVisible: shouldAllBeVisible = true, timeout = 5000 } = options;
 
-    if (allVisible) {
+    if (shouldAllBeVisible) {
       await Promise.all(
         selectors.map((selector) =>
           this.page.locator(selector).waitFor({ state: 'visible', timeout })

@@ -5,18 +5,19 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { PNG } from 'pngjs';
-import pixelmatch from 'pixelmatch';
 
 import { contextManager, createLogger } from '@kitiumai/logger';
+import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
+
 import type { Locator, Page } from '@playwright/test';
 
-export interface ScreenshotOptions {
+export type ScreenshotOptions = {
   fullPage?: boolean;
   omitBackground?: boolean;
   mask?: Locator[];
   maskColor?: string;
-}
+};
 
 /**
  * Visual regression helper
@@ -69,7 +70,7 @@ export class VisualRegressionHelper {
     });
 
     // Compare with baseline if it exists
-    let matches = false;
+    let isMatch = false;
     let diffPixels: number | undefined;
 
     if (fs.existsSync(baselinePath)) {
@@ -85,12 +86,12 @@ export class VisualRegressionHelper {
 
       fs.writeFileSync(diffPath, PNG.sync.write(diffImg));
 
-      matches = (diffPixels ?? 0) === 0;
+      isMatch = (diffPixels ?? 0) === 0;
 
       this.logger.info('Visual comparison completed', {
         traceId: context.traceId,
         name,
-        matches,
+        matches: isMatch,
         diffPixels,
       });
     } else {
@@ -106,7 +107,7 @@ export class VisualRegressionHelper {
       path: string;
       diffPixels?: number;
       diffPath?: string;
-    } = { matches, path: actualPath };
+    } = { matches: isMatch, path: actualPath };
 
     if (diffPixels !== undefined) {
       result.diffPixels = diffPixels;

@@ -1,6 +1,4 @@
 import { contextManager, createLogger } from '@kitiumai/logger';
-import { type BrowserContext, type Page, test as base, type TestInfo } from '@playwright/test';
-
 import { AccessibilityChecker } from '@kitiumai/playwright-helpers/accessibility';
 import { LoginFlow } from '@kitiumai/playwright-helpers/flows';
 import {
@@ -8,26 +6,27 @@ import {
   type NetworkMockManager,
 } from '@kitiumai/playwright-helpers/network';
 import { getTraceManager } from '@kitiumai/playwright-helpers/tracing';
+import { type BrowserContext, type Page, test as base, type TestInfo } from '@playwright/test';
 
 const attributeTestFile = 'test.file';
 const attributeTestProject = 'test.project';
 
-export interface ConsoleLogCapture {
+export type ConsoleLogCapture = {
   type: string;
   text: string;
   args: string[];
   traceId?: string;
   requestId?: string;
   timestamp: number;
-}
+};
 
-export interface ArtifactCollector {
+export type ArtifactCollector = {
   recordScreenshot(label?: string): Promise<string>;
   recordHtml(label?: string): Promise<string>;
   getArtifacts(): string[];
-}
+};
 
-export interface CoreFixtures {
+export type CoreFixtures = {
   context: BrowserContext;
   page: Page;
   mockManager: NetworkMockManager;
@@ -37,7 +36,7 @@ export interface CoreFixtures {
   traceSessionId: string;
   artifactCollector: ArtifactCollector;
   storageStatePath?: string;
-}
+};
 
 function createArtifactCollector(
   page: Page,
@@ -133,13 +132,15 @@ export type CoreTest = typeof coreTest;
 
 export async function scaffoldFixtureUsage(): Promise<string> {
   return `import { coreTest as test } from '@kitiumai/playwright-helpers/setup/fixtures';
+import { createLogger } from '@kitiumai/logger';
 
  test('example with core fixtures', async ({ page, loginFlow, mockManager, consoleLogs, artifactCollector }) => {
+   const logger = createLogger('development', { serviceName: 'e2e-test' });
    mockManager.mockGet('/api/profile', { name: 'Ada Lovelace' });
    await loginFlow.login({ email: 'demo@example.com', password: 'hunter2' });
    await page.getByRole('heading', { name: /welcome/i }).waitFor();
    await artifactCollector.recordScreenshot('home');
-   consoleLogs.forEach((entry) => console.log(entry));
+   consoleLogs.forEach((entry) => logger.debug('Browser console', entry));
  });
 `;
 }

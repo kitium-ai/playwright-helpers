@@ -3,16 +3,16 @@
  * Circuit breaker, timeout management, and chaos testing utilities
  */
 
+import { contextManager, createLogger } from '@kitiumai/logger';
 import { retry as retryCore, sleep } from '@kitiumai/test-core';
+
 import type { Page } from '@playwright/test';
 
-import { contextManager, createLogger } from '@kitiumai/logger';
-
-export interface CircuitBreakerOptions {
+export type CircuitBreakerOptions = {
   threshold: number; // Number of failures before opening
   timeout: number; // Time to wait before attempting to close
   halfOpenTimeout?: number; // Time to wait in half-open state
-}
+};
 
 export type CircuitBreakerState = 'closed' | 'open' | 'half-open';
 
@@ -301,7 +301,7 @@ export class ChaosInjector {
 /**
  * Resilience wrapper combining circuit breaker, timeout, and retry
  */
-export interface ResilienceOptions {
+export type ResilienceOptions = {
   circuitBreaker?: CircuitBreakerOptions;
   timeout?: number;
   retry?: {
@@ -314,7 +314,7 @@ export interface ResilienceOptions {
     slowNetwork?: { delayMs?: number };
     randomFailures?: { failureRate?: number };
   };
-}
+};
 
 /**
  * Execute operation with full resilience patterns

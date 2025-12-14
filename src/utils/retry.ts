@@ -9,13 +9,13 @@ import { retry as retryCore, sleep, waitFor } from '@kitiumai/test-core';
 // Re-export from test-core
 export { retry as retryWithBackoff, sleep, waitFor as waitUntil } from '@kitiumai/test-core';
 
-export interface RetryOptions {
+export type RetryOptions = {
   maxAttempts?: number;
   initialDelayMs?: number;
   maxDelayMs?: number;
   backoffMultiplier?: number;
   onRetry?: (attempt: number, error: Error) => void;
-}
+};
 
 /**
  * Retry an async operation with exponential backoff
@@ -78,7 +78,7 @@ export async function retryUntil(
   options: RetryOptions & { timeoutMs?: number } = {}
 ): Promise<void> {
   const { timeoutMs = 10000 } = options;
-  return waitFor(condition, { timeout: timeoutMs });
+  await waitFor(condition, { timeout: timeoutMs });
 }
 
 /**

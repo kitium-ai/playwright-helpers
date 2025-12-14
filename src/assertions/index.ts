@@ -157,6 +157,8 @@ export async function assertNoConsoleErrors(page: Page): Promise<void> {
     }
   });
 
+  await page.waitForTimeout(0);
+
   if (errors.length > 0) {
     throw new Error(`Expected no console errors, but found: ${errors.join(', ')}`);
   }
