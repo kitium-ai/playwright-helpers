@@ -126,7 +126,7 @@ export class TestExecutionRecorder {
    */
   addStepToAllure(name: string): void {
     void allure.step(name, async () => {
-      // Step implementation placeholder
+      await Promise.resolve();
     });
   }
 }

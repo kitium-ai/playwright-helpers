@@ -22,21 +22,21 @@ This package addresses these needs by providing battle-tested utilities that fol
 
 ## Competitor Comparison
 
-| Feature | @kitiumai/playwright-helpers | Playwright Test | TestCafe | Cypress | WebDriverIO |
-|---------|-----------------------------|-----------------|----------|---------|-------------|
-| **Page Object Model** | ✅ Advanced POM with registry | ❌ Basic support | ✅ Good POM | ✅ Built-in | ✅ Page objects |
-| **Network Mocking** | ✅ GraphQL + REST + Contract | ✅ Basic mocking | ✅ Request hooks | ❌ Limited | ✅ DevTools |
-| **Visual Regression** | ✅ pixelmatch + diffing | ❌ Manual screenshots | ❌ Basic | ❌ Limited | ✅ wdio-visual-regression |
-| **Performance Monitoring** | ✅ Lighthouse + Core Web Vitals | ❌ Manual | ❌ Basic | ❌ Limited | ❌ Limited |
-| **Accessibility Testing** | ✅ axe-core integration | ❌ Manual | ❌ Basic | ❌ Limited | ✅ axe-playwright |
-| **Tracing & Observability** | ✅ OpenTelemetry + Jaeger | ❌ Manual | ❌ Basic | ❌ Limited | ❌ Limited |
-| **Resilience Patterns** | ✅ Circuit breaker + Chaos | ❌ None | ❌ None | ❌ None | ❌ None |
-| **Contract Testing** | ✅ OpenAPI + JSON Schema | ❌ None | ❌ None | ❌ None | ❌ None |
-| **AI Test Generation** | ✅ Scenario generation | ❌ None | ❌ None | ❌ None | ❌ None |
-| **Security Testing** | ✅ OWASP ZAP integration | ❌ None | ❌ None | ❌ None | ❌ None |
-| **Mobile Testing** | ✅ Device presets | ✅ Basic | ✅ Good | ❌ Limited | ✅ Appium |
-| **Reporting** | ✅ Allure + HTML reports | ✅ Basic HTML | ✅ Good | ✅ Dashboard | ✅ Allure |
-| **Enterprise Features** | ✅ Full observability stack | ❌ Limited | ❌ Limited | ❌ Limited | ✅ Some |
+| Feature                     | @kitiumai/playwright-helpers    | Playwright Test       | TestCafe         | Cypress      | WebDriverIO               |
+| --------------------------- | ------------------------------- | --------------------- | ---------------- | ------------ | ------------------------- |
+| **Page Object Model**       | ✅ Advanced POM with registry   | ❌ Basic support      | ✅ Good POM      | ✅ Built-in  | ✅ Page objects           |
+| **Network Mocking**         | ✅ GraphQL + REST + Contract    | ✅ Basic mocking      | ✅ Request hooks | ❌ Limited   | ✅ DevTools               |
+| **Visual Regression**       | ✅ pixelmatch + diffing         | ❌ Manual screenshots | ❌ Basic         | ❌ Limited   | ✅ wdio-visual-regression |
+| **Performance Monitoring**  | ✅ Lighthouse + Core Web Vitals | ❌ Manual             | ❌ Basic         | ❌ Limited   | ❌ Limited                |
+| **Accessibility Testing**   | ✅ axe-core integration         | ❌ Manual             | ❌ Basic         | ❌ Limited   | ✅ axe-playwright         |
+| **Tracing & Observability** | ✅ OpenTelemetry + Jaeger       | ❌ Manual             | ❌ Basic         | ❌ Limited   | ❌ Limited                |
+| **Resilience Patterns**     | ✅ Circuit breaker + Chaos      | ❌ None               | ❌ None          | ❌ None      | ❌ None                   |
+| **Contract Testing**        | ✅ OpenAPI + JSON Schema        | ❌ None               | ❌ None          | ❌ None      | ❌ None                   |
+| **AI Test Generation**      | ✅ Scenario generation          | ❌ None               | ❌ None          | ❌ None      | ❌ None                   |
+| **Security Testing**        | ✅ OWASP ZAP integration        | ❌ None               | ❌ None          | ❌ None      | ❌ None                   |
+| **Mobile Testing**          | ✅ Device presets               | ✅ Basic              | ✅ Good          | ❌ Limited   | ✅ Appium                 |
+| **Reporting**               | ✅ Allure + HTML reports        | ✅ Basic HTML         | ✅ Good          | ✅ Dashboard | ✅ Allure                 |
+| **Enterprise Features**     | ✅ Full observability stack     | ❌ Limited            | ❌ Limited       | ❌ Limited   | ✅ Some                   |
 
 ## Unique Selling Proposition (USP)
 
@@ -903,6 +903,7 @@ import { getTestLogger, contextManager } from '@kitiumai/test-core';
 This section lists all exported APIs from `@kitiumai/playwright-helpers`. For detailed documentation, see [API_REFERENCES.md](../../API_REFERENCES.md).
 
 ### Accessibility
+
 - `AccessibilityChecker` (class)
 - `createAccessibilityChecker()` (function)
 - `A11yCheckResult` (type)
@@ -916,11 +917,13 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `tabToElement()` (function)
 
 ### AI Test Generation
+
 - `AITestGenerator` (class)
 - `createAITestGenerator()` (function)
 - `TestScenario` (type)
 
 ### Assertions
+
 - `AssertionBuilder` (class)
 - `createAssertion()` (function)
 - `assertConsoleMessages()` (function)
@@ -943,6 +946,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `assertUrlMatches()` (function)
 
 ### Authentication
+
 - `AuthHelper` (class)
 - `SessionManager` (class)
 - `createAuthHelper()` (function)
@@ -953,6 +957,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `AuthPresets` (object)
 
 ### Contract Testing
+
 - `ContractValidator` (class)
 - `ContractMockManager` (class)
 - `setupContractBackedMocks()` (function)
@@ -965,6 +970,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `OpenAPISpec` (type)
 
 ### Data & Factories
+
 - `createTestDataBuilder` (alias for createBuilder)
 - `createTestDataFactory` (alias for createBuilder)
 - `createTestFactory` (alias for createFactory)
@@ -975,6 +981,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `fillFormWithTestData()` (function)
 
 ### Test Flows
+
 - `FormSubmissionFlow` (class)
 - `LoginFlow` (class)
 - `LogoutFlow` (class)
@@ -994,6 +1001,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `QuickAuthOptions` (type)
 
 ### Network Mocking
+
 - `NetworkMockManager` (class)
 - `ApiMockBuilder` (class)
 - `createNetworkMockManager()` (function)
@@ -1006,6 +1014,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `MockResponse` (type)
 
 ### Page Objects
+
 - `BasePage` (class)
 - `ApplicationPage` (class)
 - `PageObjectRegistry` (class)
@@ -1014,6 +1023,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `PageObjectOptions` (type)
 
 ### Test Patterns
+
 - `TestDataManager` (class)
 - `ErrorScenarioHelper` (class)
 - `CommonPatterns` (class)
@@ -1022,6 +1032,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `createCommonPatterns()` (function)
 
 ### Performance
+
 - `PerformanceMonitor` (class)
 - `PerformanceReportBuilder` (class)
 - `createPerformanceMonitor()` (function)
@@ -1032,6 +1043,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `ResourceTiming` (type)
 
 ### Reporting
+
 - `TestExecutionRecorder` (class)
 - `FlakyTestDetector` (class)
 - `TestAnalyticsGenerator` (class)
@@ -1051,6 +1063,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `runQualityGate()` (function)
 
 ### Resilience
+
 - `CircuitBreaker` (class)
 - `TimeoutManager` (class)
 - `ChaosInjector` (class)
@@ -1063,6 +1076,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `ResilienceOptions` (type)
 
 ### Security
+
 - `SecurityChecker` (class)
 - `OWASPZAPIntegration` (class)
 - `createSecurityChecker()` (function)
@@ -1073,6 +1087,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `SecurityWarning` (type)
 
 ### Setup & Configuration
+
 - `createTest` (const)
 - `mobileDevices` (const)
 - `PlaywrightPresets` (object)
@@ -1100,6 +1115,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `ScaffoldOptions` (type)
 
 ### Testing Utilities
+
 - `ConsoleHelper` (class)
 - `DialogHelper` (class)
 - `E2ETestData` (class)
@@ -1122,6 +1138,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `createWaitHelper()` (function)
 
 ### Tracing
+
 - `TraceManager` (class)
 - `getTraceManager()` (function)
 - `traceTest()` (function)
@@ -1136,6 +1153,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `TraceExportOptions` (type)
 
 ### Utils
+
 - `EnhancedPlaywrightError` (class)
 - `createError()` (function)
 - `ErrorMessages` (object)
@@ -1153,6 +1171,7 @@ This section lists all exported APIs from `@kitiumai/playwright-helpers`. For de
 - `generateSelectorStrategies()` (function)
 
 ### Visual Testing
+
 - `VisualRegressionHelper` (class)
 - `ScreenshotBuilder` (class)
 - `createVisualRegressionHelper()` (function)
